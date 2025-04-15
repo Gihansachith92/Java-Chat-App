@@ -52,8 +52,4 @@ public class ChatService {
             // Update chat in database
             session.update(chat);
 
-            transaction.commit();
-
-            System.out.println("Chat stopped successfully at " + chat.getEndTime());
-
-        } catch (Exception e) {e.printStackTrace();}}}
+            transaction.commit();System.out.println ("Chat stopped successfully at "+chat.getEndTime());}}}
