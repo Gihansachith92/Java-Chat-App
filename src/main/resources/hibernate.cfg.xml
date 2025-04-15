@@ -1,0 +1,27 @@
+<hibernate-configuration>
+    <session-factory>
+        <!-- Database connection settings -->
+        <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/chat_app</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">1234</property>
+
+        <!-- JDBC connection pool settings -->
+        <property name="hibernate.c3p0.min_size">5</property>
+        <property name="hibernate.c3p0.max_size">20</property>
+
+        <!-- SQL dialect -->
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+
+        <!-- Automatically create/update tables -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <!-- Show SQL statements in console -->
+        <property name="hibernate.show_sql">true</property>
+
+        <!-- Annotated classes -->
+        <mapping class="models.User"/>
+        <mapping class="models.Chat"/>
+        <mapping class="models.Subscription"/>
+    </session-factory>
+</hibernate-configuration>
