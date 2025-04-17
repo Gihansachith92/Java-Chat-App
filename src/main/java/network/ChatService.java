@@ -13,11 +13,17 @@ public interface ChatService extends Remote {
     // Method to notify when a user leaves a chat
     void notifyUserLeft(String nickname) throws RemoteException;
 
-    // Method to register a client callback
+    // Method to register a client callback (legacy method)
     void registerCallback(String nickname, ChatClientCallback callback) throws RemoteException;
 
-    // Method to unregister a client callback
+    // Method to register a client callback and return a callback ID
+    String registerCallbackWithId(String nickname, ChatClientCallback callback) throws RemoteException;
+
+    // Method to unregister a client callback (legacy method)
     void unregisterCallback(String nickname) throws RemoteException;
+
+    // Method to unregister a client callback by ID
+    void unregisterCallbackById(String callbackId) throws RemoteException;
 
     // Method to notify all subscribers about a new chat
     void notifyNewChat(int chatId) throws RemoteException;

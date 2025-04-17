@@ -230,7 +230,7 @@ public class RegistrationScreen extends JFrame {
 
                 JOptionPane.showMessageDialog(RegistrationScreen.this, "Registration successful!");
                 dispose(); // Close registration screen
-                new LoginScreen().setVisible(true); // Open login screen
+                // Don't create a new login screen, the original one is still open
             }
         });
 
@@ -238,7 +238,7 @@ public class RegistrationScreen extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose(); // Close registration screen
-                new LoginScreen().setVisible(true); // Open login screen
+                // Don't create a new login screen, the original one is still open
             }
         });
     }

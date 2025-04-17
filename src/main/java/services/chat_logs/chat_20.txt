@@ -1,0 +1,42 @@
+
+                                                  ┌──────────────────────┐
+                                                  │ You need to subscrib │
+                                                  │ e to Chat 15 before  │
+                                                  │ you can send message │
+                                                  │ s.                   │
+                                                  └──────────────────────┘
+                                                  You - 21:53
+
+                                                  ┌──────────────────────┐
+                                                  │ You need to subscrib │
+                                                  │ e to Chat 15 before  │
+                                                  │ you can send message │
+                                                  │ s.                   │
+                                                  └──────────────────────┘
+                                                  You - 21:53
+
+  *** Chat started at: 2025-04-17T21:53:18.424992100 ***
+
+  *** memberOne has joined: 2025-04-17T21:53:18.425993 ***
+
+  *** Connected to chat server successfully. ***
+
+                                                  ┌──────────────────────┐
+                                                  │ You are now viewing  │
+                                                  │ Chat 15. Only subscr │
+                                                  │ ibers can send messa │
+                                                  │ ges to this chat.    │
+                                                  └──────────────────────┘
+                                                  You - 21:53
+
+┌──────────────────────┐
+│ 2025-04-17T21:53:39. │
+│ 615292800            │
+└──────────────────────┘
+memberOne left - 21:53
+
+┌──────────────────────┐
+│ 2025-04-17T21:53:39. │
+│ 634281100            │
+└──────────────────────┘
+Chat stopped at - 21:53

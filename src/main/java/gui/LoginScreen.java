@@ -162,7 +162,11 @@ public class LoginScreen extends JFrame {
                 User user = userService.loginUser(email, password);
                 if (user != null) {
                     JOptionPane.showMessageDialog(LoginScreen.this, "Login successful!");
-                    dispose(); // Close login screen
+                    // Don't dispose the login screen, keep it open for other users to log in
+                    // Clear the fields for the next user
+                    emailField.setText("");
+                    passwordField.setText("");
+
                     if (email.equalsIgnoreCase("admin@example.com")) {
                         new AdminPanel().setVisible(true); // Open admin panel for admin
                     } else {
@@ -177,8 +181,9 @@ public class LoginScreen extends JFrame {
         registerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose(); // Close login screen
-                new RegistrationScreen().setVisible(true); // Open registration screen
+                // Don't dispose the login screen, keep it open
+                // Open registration screen in a new window
+                new RegistrationScreen().setVisible(true);
             }
         });
     }

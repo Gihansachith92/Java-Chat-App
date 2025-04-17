@@ -36,6 +36,7 @@ public class ChatWindow extends JFrame {
     private services.SubscriptionService subscriptionService; // Subscription service for observer pattern
     private ChatWindowObserver observer; // Observer for subscription events
     private network.ChatClientCallback callback; // Callback for receiving messages from the server
+    private String callbackId; // ID of the registered callback
     private services.UserService userService; // User service for getting user information
     private models.Chat currentChat; // The current chat the user is viewing
 
@@ -108,7 +109,7 @@ public class ChatWindow extends JFrame {
 
             // Create and register the callback
             callback = new network.ChatClientCallbackImpl(this);
-            chatService.registerCallback(user.getNickname(), callback);
+            callbackId = chatService.registerCallbackWithId(user.getNickname(), callback);
 
             // Notify that the user has joined
             chatService.notifyUserJoined(user.getNickname());
@@ -269,9 +270,24 @@ public class ChatWindow extends JFrame {
         JPanel actionButtonsPanel = new JPanel();
         actionButtonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         actionButtonsPanel.setBackground(THEME_BACKGROUND);
+
+        // Create new window button
+        JButton newWindowButton = new JButton("New Window");
+        newWindowButton.setBackground(THEME_PRIMARY);
+        newWindowButton.setForeground(Color.WHITE);
+        newWindowButton.setFocusPainted(false);
+        newWindowButton.setBorderPainted(false);
+        newWindowButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openNewChatWindow();
+            }
+        });
+
         actionButtonsPanel.add(backButton);
         actionButtonsPanel.add(leaveChatButton);
         actionButtonsPanel.add(updateProfileButton);
+        actionButtonsPanel.add(newWindowButton);
 
         // Add action buttons panel to the message input panel
         messageInputPanel.add(actionButtonsPanel, BorderLayout.SOUTH);
@@ -617,9 +633,9 @@ public class ChatWindow extends JFrame {
             if (chatService != null) {
                 try {
                     // Unregister the callback before notifying that the user has left
-                    if (callback != null) {
+                    if (callback != null && callbackId != null) {
                         try {
-                            chatService.unregisterCallback(user.getNickname());
+                            chatService.unregisterCallbackById(callbackId);
                         } catch (Exception ex) {
                             System.err.println("Error unregistering callback: " + ex.getMessage());
                         }
@@ -872,6 +888,36 @@ public class ChatWindow extends JFrame {
             }
         } catch (Exception e) {
             System.err.println("Error updating current chat: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Method to open a new chat window for the same user and chat
+    private void openNewChatWindow() {
+        try {
+            // Create a new chat window for the same user
+            ChatWindow newWindow = new ChatWindow(user);
+
+            // If there's a current chat, select it in the new window
+            if (currentChat != null) {
+                // Find the index of the current chat in the combo box
+                for (int i = 0; i < newWindow.chatComboBox.getItemCount(); i++) {
+                    String item = newWindow.chatComboBox.getItemAt(i).toString();
+                    int chatId = Integer.parseInt(item.replace("Chat ", ""));
+                    if (chatId == currentChat.getId()) {
+                        newWindow.chatComboBox.setSelectedIndex(i);
+                        newWindow.subscribeToChat(); // Subscribe to the chat
+                        break;
+                    }
+                }
+            }
+
+            // Show the new window
+            newWindow.setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Failed to open new chat window: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
