@@ -446,46 +446,30 @@ public class ChatWindow extends JFrame {
 
             // Format based on who sent the message
             if (sender.equals(user.getNickname())) {
-                // Message from current user - right-aligned, blue bubble
-                messageArea.append("\n" + getSpaces(50) + "┌──────────────────────┐\n");
+                // Message from current user - right-aligned
+                // Add user profile info and timestamp with profile picture emoji
+                String profileInfo = "👤 You - " + timestamp;
+                messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
 
                 // Split long messages into multiple lines
-                String[] lines = splitMessage(content, 20);
+                String[] lines = splitMessage(content, 30);
                 for (String line : lines) {
-                    messageArea.append(getSpaces(50) + "│ " + line + getSpaces(20 - line.length()) + " │\n");
+                    messageArea.append(getSpaces(50 - line.length()) + line + "\n");
                 }
-
-                messageArea.append(getSpaces(50) + "└──────────────────────┘\n");
-
-                // Add user profile info and timestamp
-                String profileInfo = "You - " + timestamp;
-                messageArea.append(getSpaces(50) + profileInfo + "\n");
-
-                // We already have the current user's profile picture displayed in the header
             } else {
-                // Message from other user - left-aligned, white bubble
-                messageArea.append("\n┌──────────────────────┐\n");
-
-                // Split long messages into multiple lines
-                String[] lines = splitMessage(content, 20);
-                for (String line : lines) {
-                    messageArea.append("│ " + line + getSpaces(20 - line.length()) + " │\n");
-                }
-
-                messageArea.append("└──────────────────────┘\n");
-
-                // Add sender's profile info and timestamp
-                String profileInfo = sender + " - " + timestamp;
-                messageArea.append(profileInfo + "\n");
-
+                // Message from other user - left-aligned
                 // Try to get the sender's profile information
                 User senderUser = userService.getUserByNickname(sender);
-                if (senderUser != null) {
-                    // We can't directly display images in JTextArea, so we'll just indicate that 
-                    // the profile picture is available
-                    if (senderUser.getProfilePicture() != null && !senderUser.getProfilePicture().isEmpty()) {
-                        messageArea.append("👤 " + sender + " has a profile picture\n");
-                    }
+                String profileEmoji = "👤"; // Default profile emoji
+
+                // Add sender's profile picture indicator, nickname and timestamp at the top
+                String profileInfo = profileEmoji + " " + sender + " - " + timestamp;
+                messageArea.append("\n" + profileInfo + "\n");
+
+                // Split long messages into multiple lines
+                String[] lines = splitMessage(content, 30);
+                for (String line : lines) {
+                    messageArea.append(line + "\n");
                 }
             }
         } else {
@@ -497,20 +481,15 @@ public class ChatWindow extends JFrame {
             LocalDateTime now = LocalDateTime.now();
             String timestamp = now.getHour() + ":" + String.format("%02d", now.getMinute());
 
-            // Format as a message from the current user
-            messageArea.append("\n" + getSpaces(50) + "┌──────────────────────┐\n");
+            // Add user profile info and timestamp with profile picture emoji
+            String profileInfo = "👤 You - " + timestamp;
+            messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
 
             // Split long messages into multiple lines
-            String[] lines = splitMessage(content, 20);
+            String[] lines = splitMessage(content, 30);
             for (String line : lines) {
-                messageArea.append(getSpaces(50) + "│ " + line + getSpaces(20 - line.length()) + " │\n");
+                messageArea.append(getSpaces(50 - line.length()) + line + "\n");
             }
-
-            messageArea.append(getSpaces(50) + "└──────────────────────┘\n");
-
-            // Add user profile info and timestamp
-            String profileInfo = "You - " + timestamp;
-            messageArea.append(getSpaces(50) + profileInfo + "\n");
         }
 
         // Check if this is a user join notification
