@@ -25,25 +25,25 @@ public class ProfileUpdateScreen extends JFrame {
     private String profilePicturePath;
     private User user;
 
-    // WhatsApp colors
-    private static final Color WHATSAPP_GREEN = new Color(0, 168, 132);
-    private static final Color WHATSAPP_LIGHT_GREEN = new Color(220, 248, 198);
-    private static final Color WHATSAPP_BACKGROUND = new Color(230, 230, 230);
-    private static final Color WHATSAPP_HEADER = new Color(32, 44, 51);
-    private static final Color WHATSAPP_MESSAGE_TEXT = new Color(0, 0, 0);
+    // Professional/Enterprise theme colors
+    private static final Color THEME_PRIMARY = new Color(59, 89, 152);  // Dark blue
+    private static final Color THEME_SECONDARY = new Color(223, 227, 238);  // Light blue-gray
+    private static final Color THEME_BACKGROUND = new Color(240, 242, 245);  // Very light gray
+    private static final Color THEME_HEADER = new Color(35, 53, 91);  // Darker blue
+    private static final Color THEME_TEXT = new Color(33, 33, 33);  // Dark gray for text
 
     public ProfileUpdateScreen(User user) {
         this.user = user;
         this.profilePicturePath = user.getProfilePicture();
 
-        setTitle("WhatsApp - Profile Update");
+        setTitle("ChatNest - Profile Update");
         setSize(400, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create WhatsApp-style header
+        // Create professional-style header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(WHATSAPP_HEADER);
+        headerPanel.setBackground(THEME_HEADER);
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         headerPanel.setPreferredSize(new Dimension(400, 60));
@@ -53,40 +53,40 @@ public class ProfileUpdateScreen extends JFrame {
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
 
-        // Create components with WhatsApp styling
+        // Create components with professional styling
         JLabel usernameLabel = new JLabel("Username:");
         usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        usernameLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        usernameLabel.setForeground(THEME_TEXT);
 
         usernameField = new JTextField(user.getUsername(), 20);
         usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
         usernameField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createLineBorder(THEME_PRIMARY, 1),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
         JLabel passwordLabel = new JLabel("Password:");
         passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        passwordLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        passwordLabel.setForeground(THEME_TEXT);
 
         passwordField = new JPasswordField(user.getPassword(), 20);
         passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
         passwordField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createLineBorder(THEME_PRIMARY, 1),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
         JLabel nicknameLabel = new JLabel("Nickname:");
         nicknameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        nicknameLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        nicknameLabel.setForeground(THEME_TEXT);
 
         nicknameField = new JTextField(user.getNickname(), 20);
         nicknameField.setFont(new Font("Arial", Font.PLAIN, 14));
         nicknameField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createLineBorder(THEME_PRIMARY, 1),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
         JLabel profilePicLabel = new JLabel("Profile Picture:");
         profilePicLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        profilePicLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        profilePicLabel.setForeground(THEME_TEXT);
 
         profilePictureLabel = new JLabel(user.getProfilePicture() != null ? new File(user.getProfilePicture()).getName() : "No image selected");
         profilePictureLabel.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -114,7 +114,7 @@ public class ProfileUpdateScreen extends JFrame {
 
         // Create profile picture panel
         JPanel profilePanel = new JPanel();
-        profilePanel.setBackground(WHATSAPP_BACKGROUND);
+        profilePanel.setBackground(THEME_BACKGROUND);
         profilePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
         // Add user profile picture
@@ -127,19 +127,19 @@ public class ProfileUpdateScreen extends JFrame {
             } catch (Exception ex) {
                 userPicLabel.setText("👤");
                 userPicLabel.setFont(new Font("Arial", Font.PLAIN, 48));
-                userPicLabel.setForeground(WHATSAPP_GREEN);
+                userPicLabel.setForeground(THEME_PRIMARY);
             }
         } else {
             userPicLabel.setText("👤");
             userPicLabel.setFont(new Font("Arial", Font.PLAIN, 48));
-            userPicLabel.setForeground(WHATSAPP_GREEN);
+            userPicLabel.setForeground(THEME_PRIMARY);
         }
         profilePanel.add(userPicLabel);
 
         // Create form panel
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new GridBagLayout());
-        formPanel.setBackground(WHATSAPP_BACKGROUND);
+        formPanel.setBackground(THEME_BACKGROUND);
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -172,7 +172,7 @@ public class ProfileUpdateScreen extends JFrame {
         // Create picture panel
         JPanel picturePanel = new JPanel();
         picturePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        picturePanel.setBackground(WHATSAPP_BACKGROUND);
+        picturePanel.setBackground(THEME_BACKGROUND);
         picturePanel.add(profilePictureLabel);
         picturePanel.add(uploadPictureButton);
 
@@ -182,7 +182,7 @@ public class ProfileUpdateScreen extends JFrame {
         // Create button panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2, 10, 0));
-        buttonPanel.setBackground(WHATSAPP_BACKGROUND);
+        buttonPanel.setBackground(THEME_BACKGROUND);
         buttonPanel.add(updateButton);
         buttonPanel.add(backButton);
 
@@ -193,7 +193,7 @@ public class ProfileUpdateScreen extends JFrame {
         // Main panel with BorderLayout
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setBackground(WHATSAPP_BACKGROUND);
+        mainPanel.setBackground(THEME_BACKGROUND);
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(profilePanel, BorderLayout.CENTER);
         mainPanel.add(formPanel, BorderLayout.SOUTH);
@@ -268,9 +268,9 @@ public class ProfileUpdateScreen extends JFrame {
         });
     }
 
-    // Helper method to style buttons with WhatsApp theme
+    // Helper method to style buttons with professional theme
     private void styleButton(JButton button) {
-        button.setBackground(WHATSAPP_GREEN);
+        button.setBackground(THEME_PRIMARY);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);

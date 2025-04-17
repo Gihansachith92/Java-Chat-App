@@ -21,12 +21,12 @@ public class LoginScreen extends JFrame {
 
     private static boolean isServerStarted = false;
 
-    // WhatsApp colors
-    private static final Color WHATSAPP_GREEN = new Color(0, 168, 132);
-    private static final Color WHATSAPP_LIGHT_GREEN = new Color(220, 248, 198);
-    private static final Color WHATSAPP_BACKGROUND = new Color(230, 230, 230);
-    private static final Color WHATSAPP_HEADER = new Color(32, 44, 51);
-    private static final Color WHATSAPP_MESSAGE_TEXT = new Color(0, 0, 0);
+    // Professional/Enterprise theme colors
+    private static final Color THEME_PRIMARY = new Color(59, 89, 152);  // Dark blue
+    private static final Color THEME_SECONDARY = new Color(223, 227, 238);  // Light blue-gray
+    private static final Color THEME_BACKGROUND = new Color(240, 242, 245);  // Very light gray
+    private static final Color THEME_HEADER = new Color(35, 53, 91);  // Darker blue
+    private static final Color THEME_TEXT = new Color(33, 33, 33);  // Dark gray for text
 
     // Method to start the RMI chat server
     private void startChatServer() {
@@ -54,42 +54,42 @@ public class LoginScreen extends JFrame {
         // Start the chat server when the login screen is created
         startChatServer();
 
-        setTitle("WhatsApp - Login");
+        setTitle("ChatNest - Login");
         setSize(400, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create WhatsApp-style header
+        // Create header with professional theme
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(WHATSAPP_HEADER);
+        headerPanel.setBackground(THEME_HEADER);
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         headerPanel.setPreferredSize(new Dimension(400, 60));
 
-        JLabel titleLabel = new JLabel("WhatsApp");
+        JLabel titleLabel = new JLabel("ChatNest");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
 
-        // Create components with WhatsApp styling
+        // Create components with professional styling
         JLabel emailLabel = new JLabel("Email:");
         emailLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        emailLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        emailLabel.setForeground(THEME_TEXT);
 
         emailField = new JTextField(20);
         emailField.setFont(new Font("Arial", Font.PLAIN, 14));
         emailField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createLineBorder(THEME_PRIMARY, 1),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
         JLabel passwordLabel = new JLabel("Password:");
         passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        passwordLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        passwordLabel.setForeground(THEME_TEXT);
 
         passwordField = new JPasswordField(20);
         passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
         passwordField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createLineBorder(THEME_PRIMARY, 1),
             BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
         loginButton = new JButton("Login");
@@ -100,19 +100,19 @@ public class LoginScreen extends JFrame {
 
         // Create logo panel
         JPanel logoPanel = new JPanel();
-        logoPanel.setBackground(WHATSAPP_BACKGROUND);
+        logoPanel.setBackground(THEME_BACKGROUND);
         logoPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-        // Add WhatsApp logo (text as placeholder)
-        JLabel logoLabel = new JLabel("WhatsApp");
+        // Add ChatNest logo (text as placeholder)
+        JLabel logoLabel = new JLabel("ChatNest");
         logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        logoLabel.setForeground(WHATSAPP_GREEN);
+        logoLabel.setForeground(THEME_PRIMARY);
         logoPanel.add(logoLabel);
 
         // Create form panel
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new GridBagLayout());
-        formPanel.setBackground(WHATSAPP_BACKGROUND);
+        formPanel.setBackground(THEME_BACKGROUND);
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -143,7 +143,7 @@ public class LoginScreen extends JFrame {
         // Main panel with BorderLayout
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setBackground(WHATSAPP_BACKGROUND);
+        mainPanel.setBackground(THEME_BACKGROUND);
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(logoPanel, BorderLayout.CENTER);
         mainPanel.add(formPanel, BorderLayout.SOUTH);
@@ -187,9 +187,9 @@ public class LoginScreen extends JFrame {
         SwingUtilities.invokeLater(() -> new LoginScreen().setVisible(true));
     }
 
-    // Helper method to style buttons with WhatsApp theme
+    // Helper method to style buttons with professional theme
     private void styleButton(JButton button) {
-        button.setBackground(WHATSAPP_GREEN);
+        button.setBackground(THEME_PRIMARY);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);

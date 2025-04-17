@@ -18,7 +18,7 @@ public class AdminProfileUpdateScreen extends ProfileUpdateScreen {
         super(user);
 
         // Change the title to indicate admin mode
-        setTitle("WhatsApp Admin - Edit User Profile");
+        setTitle("ChatNest Admin - Edit User Profile");
 
         // Override the back button action to return to AdminPanel
         for (ActionListener al : backButton.getActionListeners()) {
