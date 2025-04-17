@@ -38,13 +38,20 @@ public class ChatWindow extends JFrame {
     private ChatWindowObserver observer; // Observer for subscription events
     private network.ChatClientCallback callback; // Callback for receiving messages from the server
 
+    // WhatsApp colors
+    private static final Color WHATSAPP_GREEN = new Color(0, 168, 132);
+    private static final Color WHATSAPP_LIGHT_GREEN = new Color(220, 248, 198);
+    private static final Color WHATSAPP_BACKGROUND = new Color(230, 230, 230);
+    private static final Color WHATSAPP_HEADER = new Color(32, 44, 51);
+    private static final Color WHATSAPP_MESSAGE_TEXT = new Color(0, 0, 0);
+
     public ChatWindow(User user) {
         this.user = user;
         this.connectedUsers = new ArrayList<>();
         this.subscriptionService = new services.SubscriptionService();
 
-        setTitle("Chat Window - Welcome " + user.getNickname());
-        setSize(600, 400);
+        setTitle("WhatsApp - " + user.getNickname());
+        setSize(400, 650); // More phone-like dimensions
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -53,11 +60,33 @@ public class ChatWindow extends JFrame {
         messageArea.setEditable(false); // Prevent editing of received messages
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
+        messageArea.setBackground(WHATSAPP_BACKGROUND);
+        messageArea.setFont(new Font("Arial", Font.PLAIN, 14));
 
         messageField = new JTextField(30);
+        messageField.setBackground(Color.WHITE);
+        messageField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        messageField.setFont(new Font("Arial", Font.PLAIN, 14));
+
         sendButton = new JButton("Send");
-        leaveChatButton = new JButton("Leave Chat");
-        updateProfileButton = new JButton("Update Profile");
+        sendButton.setBackground(WHATSAPP_GREEN);
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFocusPainted(false);
+        sendButton.setBorderPainted(false);
+
+        leaveChatButton = new JButton("Leave");
+        leaveChatButton.setBackground(WHATSAPP_GREEN);
+        leaveChatButton.setForeground(Color.WHITE);
+        leaveChatButton.setFocusPainted(false);
+        leaveChatButton.setBorderPainted(false);
+
+        updateProfileButton = new JButton("Profile");
+        updateProfileButton.setBackground(WHATSAPP_GREEN);
+        updateProfileButton.setForeground(Color.WHITE);
+        updateProfileButton.setFocusPainted(false);
+        updateProfileButton.setBorderPainted(false);
 
         // Create and register the observer
         this.observer = new ChatWindowObserver(this);
@@ -106,8 +135,20 @@ public class ChatWindow extends JFrame {
 
         // Create subscription components
         subscribeButton = new JButton("Subscribe");
+        subscribeButton.setBackground(WHATSAPP_GREEN);
+        subscribeButton.setForeground(Color.WHITE);
+        subscribeButton.setFocusPainted(false);
+        subscribeButton.setBorderPainted(false);
+
         unsubscribeButton = new JButton("Unsubscribe");
+        unsubscribeButton.setBackground(WHATSAPP_GREEN);
+        unsubscribeButton.setForeground(Color.WHITE);
+        unsubscribeButton.setFocusPainted(false);
+        unsubscribeButton.setBorderPainted(false);
+
         chatComboBox = new JComboBox<>();
+        chatComboBox.setBackground(Color.WHITE);
+        chatComboBox.setBorder(BorderFactory.createLineBorder(WHATSAPP_GREEN, 1));
 
         // Populate chat dropdown with available chats
         populateChatsDropdown();
@@ -115,8 +156,12 @@ public class ChatWindow extends JFrame {
         // Create private messaging components
         recipientComboBox = new JComboBox<>();
         recipientComboBox.addItem("Everyone"); // Default option for broadcasting
+        recipientComboBox.setBackground(Color.WHITE);
+        recipientComboBox.setBorder(BorderFactory.createLineBorder(WHATSAPP_GREEN, 1));
 
         privateMessageCheckBox = new JCheckBox("Private Message");
+        privateMessageCheckBox.setForeground(WHATSAPP_MESSAGE_TEXT);
+        privateMessageCheckBox.setBackground(WHATSAPP_BACKGROUND);
         privateMessageCheckBox.addActionListener(e -> {
             recipientComboBox.setEnabled(privateMessageCheckBox.isSelected());
         });
@@ -127,10 +172,19 @@ public class ChatWindow extends JFrame {
         // Layout setup
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
+        panel.setBackground(WHATSAPP_BACKGROUND);
 
-        // Create user profile panel
+        // Create WhatsApp-style header panel
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setBackground(WHATSAPP_HEADER);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        headerPanel.setPreferredSize(new Dimension(400, 60));
+
+        // Create user profile panel for the header
         JPanel profilePanel = new JPanel();
-        profilePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        profilePanel.setLayout(new BorderLayout());
+        profilePanel.setBackground(WHATSAPP_HEADER);
 
         // Add user profile picture (placeholder for now)
         JLabel profilePicLabel = new JLabel();
@@ -138,64 +192,123 @@ public class ChatWindow extends JFrame {
             try {
                 ImageIcon profilePic = new ImageIcon(user.getProfilePicture());
                 // Resize the image to fit
-                Image img = profilePic.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                Image img = profilePic.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
                 profilePicLabel.setIcon(new ImageIcon(img));
             } catch (Exception e) {
                 // If image loading fails, use a placeholder
-                profilePicLabel.setText("[No Image]");
+                profilePicLabel.setText("👤");
+                profilePicLabel.setFont(new Font("Arial", Font.PLAIN, 24));
+                profilePicLabel.setForeground(Color.WHITE);
             }
         } else {
-            profilePicLabel.setText("[No Image]");
+            profilePicLabel.setText("👤");
+            profilePicLabel.setFont(new Font("Arial", Font.PLAIN, 24));
+            profilePicLabel.setForeground(Color.WHITE);
         }
-        profilePanel.add(profilePicLabel);
 
-        // Add user nickname
-        JLabel nicknameLabel = new JLabel("Nickname: " + user.getNickname());
-        profilePanel.add(nicknameLabel);
+        // Create a panel for the profile picture
+        JPanel picPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        picPanel.setBackground(WHATSAPP_HEADER);
+        picPanel.add(profilePicLabel);
 
-        // Add profile panel to the main panel
-        panel.add(profilePanel, BorderLayout.NORTH);
+        // Add user nickname with WhatsApp styling
+        JLabel nicknameLabel = new JLabel(user.getNickname());
+        nicknameLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        nicknameLabel.setForeground(Color.WHITE);
+
+        // Add components to profile panel
+        profilePanel.add(picPanel, BorderLayout.WEST);
+        profilePanel.add(nicknameLabel, BorderLayout.CENTER);
+
+        // Add profile panel to the header
+        headerPanel.add(profilePanel, BorderLayout.CENTER);
+
+        // Add header panel to the main panel
+        panel.add(headerPanel, BorderLayout.NORTH);
 
         // Add message area (scrollable)
         panel.add(new JScrollPane(messageArea), BorderLayout.CENTER);
 
-        // Add input panel (message field + buttons)
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new FlowLayout());
+        // Create WhatsApp-style message input area
+        JPanel messageInputPanel = new JPanel();
+        messageInputPanel.setLayout(new BorderLayout());
+        messageInputPanel.setBackground(WHATSAPP_BACKGROUND);
+        messageInputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Add private messaging controls
+        // Create a rounded panel for the message field and send button
+        JPanel inputFieldPanel = new JPanel();
+        inputFieldPanel.setLayout(new BorderLayout());
+        inputFieldPanel.setBackground(Color.WHITE);
+        inputFieldPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(WHATSAPP_GREEN, 1),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+        // Add message field to the input field panel
+        inputFieldPanel.add(messageField, BorderLayout.CENTER);
+
+        // Create a panel for the send button
+        JPanel sendButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        sendButtonPanel.setBackground(Color.WHITE);
+        sendButtonPanel.add(sendButton);
+
+        // Add send button panel to the input field panel
+        inputFieldPanel.add(sendButtonPanel, BorderLayout.EAST);
+
+        // Add input field panel to the message input panel
+        messageInputPanel.add(inputFieldPanel, BorderLayout.CENTER);
+
+        // Create a panel for the action buttons
+        JPanel actionButtonsPanel = new JPanel();
+        actionButtonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        actionButtonsPanel.setBackground(WHATSAPP_BACKGROUND);
+        actionButtonsPanel.add(leaveChatButton);
+        actionButtonsPanel.add(updateProfileButton);
+
+        // Add action buttons panel to the message input panel
+        messageInputPanel.add(actionButtonsPanel, BorderLayout.SOUTH);
+
+        // Create a panel for the controls (private messaging and subscription)
+        JPanel controlsPanel = new JPanel();
+        controlsPanel.setLayout(new BorderLayout());
+        controlsPanel.setBackground(WHATSAPP_BACKGROUND);
+
+        // Create a panel for private messaging controls
         JPanel privateMessagePanel = new JPanel();
         privateMessagePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        privateMessagePanel.setBackground(WHATSAPP_BACKGROUND);
         privateMessagePanel.add(privateMessageCheckBox);
         privateMessagePanel.add(recipientComboBox);
 
-        // Add subscription controls
+        // Create a panel for subscription controls
         JPanel subscriptionPanel = new JPanel();
         subscriptionPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        subscriptionPanel.add(new JLabel("Available Chats:"));
+        subscriptionPanel.setBackground(WHATSAPP_BACKGROUND);
+        JLabel chatsLabel = new JLabel("Available Chats:");
+        chatsLabel.setForeground(WHATSAPP_MESSAGE_TEXT);
+        subscriptionPanel.add(chatsLabel);
         subscriptionPanel.add(chatComboBox);
         subscriptionPanel.add(subscribeButton);
         subscriptionPanel.add(unsubscribeButton);
 
-        // Add all components to the input panel
-        inputPanel.add(messageField);
-        inputPanel.add(sendButton);
-        inputPanel.add(leaveChatButton);
-        inputPanel.add(updateProfileButton);
+        // Add private messaging and subscription panels to the controls panel
+        JPanel controlsGridPanel = new JPanel();
+        controlsGridPanel.setLayout(new GridLayout(2, 1));
+        controlsGridPanel.setBackground(WHATSAPP_BACKGROUND);
+        controlsGridPanel.add(privateMessagePanel);
+        controlsGridPanel.add(subscriptionPanel);
 
-        // Create a panel for the bottom section with private messaging and subscription controls
+        controlsPanel.add(controlsGridPanel, BorderLayout.CENTER);
+
+        // Create a panel for the bottom section
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BorderLayout());
+        bottomPanel.setBackground(WHATSAPP_BACKGROUND);
 
-        // Create a panel for the controls
-        JPanel controlsPanel = new JPanel();
-        controlsPanel.setLayout(new GridLayout(2, 1));
-        controlsPanel.add(privateMessagePanel);
-        controlsPanel.add(subscriptionPanel);
-
+        // Add controls panel and message input panel to the bottom panel
         bottomPanel.add(controlsPanel, BorderLayout.NORTH);
-        bottomPanel.add(inputPanel, BorderLayout.SOUTH);
+        bottomPanel.add(messageInputPanel, BorderLayout.SOUTH);
 
+        // Add bottom panel to the main panel
         panel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(panel);
@@ -259,9 +372,60 @@ public class ChatWindow extends JFrame {
         });
     }
 
-    // Method to display a message in the chat window
+    // Method to display a message in the chat window with WhatsApp-style formatting
     public void displayMessage(String message) {
-        messageArea.append(message + "\n");
+        // Format system messages differently
+        if (message.contains("Chat started at:") || 
+            message.contains("has joined:") || 
+            message.contains("has joined the chat") || 
+            message.contains("has left the chat") ||
+            message.contains("Connected to chat server") ||
+            message.contains("WARNING:")) {
+
+            // System message - centered, gray
+            messageArea.append("\n  *** " + message + " ***\n");
+        } 
+        // Format user messages as chat bubbles
+        else if (message.contains(":")) {
+            // Try to extract the sender's nickname
+            String sender = message.substring(0, message.indexOf(":")).trim();
+            String content = message.substring(message.indexOf(":") + 1).trim();
+
+            // Check if this is a private message
+            boolean isPrivate = message.contains("[Private to");
+
+            // Format based on who sent the message
+            if (sender.equals(user.getNickname()) || (isPrivate && message.contains(user.getNickname() + ":"))) {
+                // Message from current user - right-aligned, green bubble
+                messageArea.append("\n" + getSpaces(50) + "┌──────────────────────┐\n");
+
+                // Split long messages into multiple lines
+                String[] lines = splitMessage(content, 20);
+                for (String line : lines) {
+                    messageArea.append(getSpaces(50) + "│ " + line + getSpaces(20 - line.length()) + " │\n");
+                }
+
+                messageArea.append(getSpaces(50) + "└──────────────────────┘\n");
+                messageArea.append(getSpaces(50) + "You - " + LocalDateTime.now().getHour() + ":" + 
+                                  String.format("%02d", LocalDateTime.now().getMinute()) + "\n");
+            } else {
+                // Message from other user - left-aligned, white bubble
+                messageArea.append("\n┌──────────────────────┐\n");
+
+                // Split long messages into multiple lines
+                String[] lines = splitMessage(content, 20);
+                for (String line : lines) {
+                    messageArea.append("│ " + line + getSpaces(20 - line.length()) + " │\n");
+                }
+
+                messageArea.append("└──────────────────────┘\n");
+                messageArea.append(sender + " - " + LocalDateTime.now().getHour() + ":" + 
+                                  String.format("%02d", LocalDateTime.now().getMinute()) + "\n");
+            }
+        } else {
+            // Regular message without sender info
+            messageArea.append("\n" + message + "\n");
+        }
 
         // Check if this is a user join notification
         if (message.contains("has joined the chat")) {
@@ -280,6 +444,36 @@ public class ChatWindow extends JFrame {
                 recipientComboBox.removeItem(nickname);
             }
         }
+
+        // Scroll to the bottom to show the latest message
+        messageArea.setCaretPosition(messageArea.getDocument().getLength());
+    }
+
+    // Helper method to create spaces for alignment
+    private String getSpaces(int count) {
+        StringBuilder spaces = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            spaces.append(" ");
+        }
+        return spaces.toString();
+    }
+
+    // Helper method to split long messages into multiple lines
+    private String[] splitMessage(String message, int maxLength) {
+        if (message.length() <= maxLength) {
+            return new String[] { message };
+        }
+
+        int lines = (message.length() + maxLength - 1) / maxLength;
+        String[] result = new String[lines];
+
+        for (int i = 0; i < lines; i++) {
+            int start = i * maxLength;
+            int end = Math.min(start + maxLength, message.length());
+            result[i] = message.substring(start, end);
+        }
+
+        return result;
     }
 
     // Method to send a message

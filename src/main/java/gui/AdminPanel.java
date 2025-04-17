@@ -15,34 +15,78 @@ public class AdminPanel extends JFrame {
 
     private JButton createChatButton;
     private JButton viewUsersButton;
+    private JButton viewChatsButton;
     private JButton subscribeUserButton;
     private JButton unsubscribeUserButton;
     private JButton removeUserButton;
     private JButton backButton;
 
+    // WhatsApp colors
+    private static final Color WHATSAPP_GREEN = new Color(0, 168, 132);
+    private static final Color WHATSAPP_LIGHT_GREEN = new Color(220, 248, 198);
+    private static final Color WHATSAPP_BACKGROUND = new Color(230, 230, 230);
+    private static final Color WHATSAPP_HEADER = new Color(32, 44, 51);
+    private static final Color WHATSAPP_MESSAGE_TEXT = new Color(0, 0, 0);
+
     public AdminPanel() {
-        setTitle("Admin Panel");
-        setSize(600, 400);
+        setTitle("WhatsApp Admin Panel");
+        setSize(400, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create components
+        // Create components with WhatsApp styling
         createChatButton = new JButton("Create Chat");
-        viewUsersButton = new JButton("View Users");
-        subscribeUserButton = new JButton("Subscribe User");
-        unsubscribeUserButton = new JButton("Unsubscribe User");
-        removeUserButton = new JButton("Remove User");
-        backButton = new JButton("Back to Login");
+        styleButton(createChatButton);
 
-        // Layout setup
+        viewUsersButton = new JButton("View Users");
+        styleButton(viewUsersButton);
+
+        viewChatsButton = new JButton("View Chats");
+        styleButton(viewChatsButton);
+
+        subscribeUserButton = new JButton("Subscribe User");
+        styleButton(subscribeUserButton);
+
+        unsubscribeUserButton = new JButton("Unsubscribe User");
+        styleButton(unsubscribeUserButton);
+
+        removeUserButton = new JButton("Remove User");
+        styleButton(removeUserButton);
+
+        backButton = new JButton("Back to Login");
+        styleButton(backButton);
+
+        // Create WhatsApp-style header
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(WHATSAPP_HEADER);
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+
+        JLabel titleLabel = new JLabel("WhatsApp Admin");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+
+        // Create main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new GridLayout(7, 1, 10, 10));
+        contentPanel.setBackground(WHATSAPP_BACKGROUND);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        contentPanel.add(createChatButton);
+        contentPanel.add(viewUsersButton);
+        contentPanel.add(viewChatsButton);
+        contentPanel.add(subscribeUserButton);
+        contentPanel.add(unsubscribeUserButton);
+        contentPanel.add(removeUserButton);
+        contentPanel.add(backButton);
+
+        // Main panel with BorderLayout
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(6, 1, 10, 10));
-        panel.add(createChatButton);
-        panel.add(viewUsersButton);
-        panel.add(subscribeUserButton);
-        panel.add(unsubscribeUserButton);
-        panel.add(removeUserButton);
-        panel.add(backButton);
+        panel.setLayout(new BorderLayout());
+        panel.setBackground(WHATSAPP_BACKGROUND);
+        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, BorderLayout.CENTER);
 
         add(panel);
 
@@ -66,11 +110,56 @@ public class AdminPanel extends JFrame {
         viewUsersButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                StringBuilder userList = new StringBuilder("Registered Users:\n");
+                StringBuilder userList = new StringBuilder("<html><div style='font-family:Arial; font-size:12px; padding:10px;'>");
+                userList.append("<h2 style='color:#075E54;'>Registered Users</h2>");
+                userList.append("<table style='width:100%; border-collapse:collapse;'>");
+                userList.append("<tr style='background-color:#075E54; color:white;'><th style='padding:8px;'>ID</th><th style='padding:8px;'>Nickname</th></tr>");
+
+                boolean alternate = false;
                 for (User user : userService.getAllUsers()) {
-                    userList.append(user.getNickname()).append("\n");
+                    String rowStyle = alternate ? "background-color:#ECE5DD;" : "background-color:#FFFFFF;";
+                    userList.append("<tr style='").append(rowStyle).append("'>");
+                    userList.append("<td style='padding:8px; text-align:center;'>").append(user.getId()).append("</td>");
+                    userList.append("<td style='padding:8px;'>").append(user.getNickname()).append("</td>");
+                    userList.append("</tr>");
+                    alternate = !alternate;
                 }
-                JOptionPane.showMessageDialog(AdminPanel.this, userList.toString());
+
+                userList.append("</table></div></html>");
+                JOptionPane.showMessageDialog(AdminPanel.this, userList.toString(), "WhatsApp Users", JOptionPane.PLAIN_MESSAGE);
+            }
+        });
+
+        viewChatsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StringBuilder chatList = new StringBuilder("<html><div style='font-family:Arial; font-size:12px; padding:10px;'>");
+                chatList.append("<h2 style='color:#075E54;'>Available Chats</h2>");
+                chatList.append("<table style='width:100%; border-collapse:collapse;'>");
+                chatList.append("<tr style='background-color:#075E54; color:white;'>");
+                chatList.append("<th style='padding:8px;'>Chat ID</th>");
+                chatList.append("<th style='padding:8px;'>Created</th>");
+                chatList.append("<th style='padding:8px;'>Status</th>");
+                chatList.append("</tr>");
+
+                boolean alternate = false;
+                for (Chat chat : chatService.getAllChats()) {
+                    String rowStyle = alternate ? "background-color:#ECE5DD;" : "background-color:#FFFFFF;";
+                    chatList.append("<tr style='").append(rowStyle).append("'>");
+                    chatList.append("<td style='padding:8px; text-align:center;'>").append(chat.getId()).append("</td>");
+                    chatList.append("<td style='padding:8px;'>").append(chat.getStartTime()).append("</td>");
+
+                    // Determine chat status
+                    String status = chat.getEndTime() == null ? "Active" : "Ended";
+                    String statusColor = chat.getEndTime() == null ? "green" : "red";
+                    chatList.append("<td style='padding:8px; color:").append(statusColor).append(";'>").append(status).append("</td>");
+
+                    chatList.append("</tr>");
+                    alternate = !alternate;
+                }
+
+                chatList.append("</table></div></html>");
+                JOptionPane.showMessageDialog(AdminPanel.this, chatList.toString(), "WhatsApp Chats", JOptionPane.PLAIN_MESSAGE);
             }
         });
 
@@ -147,5 +236,15 @@ public class AdminPanel extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new AdminPanel().setVisible(true));
+    }
+
+    // Helper method to style buttons with WhatsApp theme
+    private void styleButton(JButton button) {
+        button.setBackground(WHATSAPP_GREEN);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
     }
 }

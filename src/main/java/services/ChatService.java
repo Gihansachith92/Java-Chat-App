@@ -3,11 +3,14 @@ package services;
 import models.Chat;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import utils.HibernateUtil;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChatService {
 
@@ -63,4 +66,20 @@ public class ChatService {
             // Update chat in database
             session.update(chat);
 
-            transaction.commit();System.out.println ("Chat stopped successfully at "+chat.getEndTime());}}}
+            transaction.commit();
+            System.out.println("Chat stopped successfully at " + chat.getEndTime());
+        }
+    }
+
+    // Get all chats from the database
+    public List<Chat> getAllChats() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<Chat> query = session.createQuery("FROM Chat", Chat.class);
+            return query.list();
+        } catch (Exception e) {
+            System.err.println("Error getting chats: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+}
