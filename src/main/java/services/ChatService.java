@@ -11,6 +11,17 @@ import java.time.LocalDateTime;
 
 public class ChatService {
 
+    // Get a chat by ID
+    public Chat getChatById(int chatId) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Chat chat = session.get(Chat.class, chatId);
+            return chat;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // Start a new chat
     public Chat startChat() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

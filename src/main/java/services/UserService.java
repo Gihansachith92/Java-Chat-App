@@ -65,20 +65,43 @@ public class UserService {
         }
     }
 
+    // Get a user by ID
+    public User getUserById(int userId) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            User user = session.get(User.class, userId);
+            if (user != null) {
+                return user;
+            } else {
+                System.out.println("User not found with ID: " + userId);
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // Delete a user by ID
-    public void deleteUser(int userId) {
+    public boolean deleteUser(int userId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction transaction = session.beginTransaction();
-            User user = session.get(User.class, userId);
+
+            // Use getUserById to get the user
+            User user = getUserById(userId);
+
             if (user != null) {
                 session.delete(user);
                 System.out.println("User deleted successfully!");
+                transaction.commit();
+                return true;
             } else {
-                System.out.println("User not found.");
+                System.out.println("User not found with ID: " + userId);
+                transaction.commit();
+                return false;
             }
-            transaction.commit();
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 }

@@ -15,4 +15,10 @@ public interface ChatService extends Remote {
 
     // Method to send a private message to a specific user
     void sendPrivateMessage(String senderNickname, String recipientNickname, String message) throws RemoteException;
+
+    // Method to register a client callback
+    void registerCallback(String nickname, ChatClientCallback callback) throws RemoteException;
+
+    // Method to unregister a client callback
+    void unregisterCallback(String nickname) throws RemoteException;
 }

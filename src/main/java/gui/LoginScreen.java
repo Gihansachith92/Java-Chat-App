@@ -1,12 +1,15 @@
 package gui;
 
 import models.User;
+import network.ChatServerImpl;
 import services.UserService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class LoginScreen extends JFrame {
 
@@ -15,7 +18,34 @@ public class LoginScreen extends JFrame {
     private JButton loginButton;
     private JButton registerButton;
 
+    private static boolean isServerStarted = false;
+
+    // Method to start the RMI chat server
+    private void startChatServer() {
+        if (!isServerStarted) {
+            try {
+                // Create an instance of the server implementation
+                network.ChatService chatService = new ChatServerImpl();
+
+                // Start the RMI registry on port 1099
+                Registry registry = LocateRegistry.createRegistry(1099);
+
+                // Bind the service to the registry
+                registry.rebind("ChatService", chatService);
+
+                System.out.println("Chat server is running...");
+                isServerStarted = true;
+            } catch (Exception e) {
+                System.err.println("Failed to start chat server: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
     public LoginScreen() {
+        // Start the chat server when the login screen is created
+        startChatServer();
+
         setTitle("Chat Application - Login");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -25,6 +25,7 @@ public class ChatWindow extends JFrame {
     private JButton leaveChatButton;
     private JButton subscribeButton; // Button for self-subscribing to chats
     private JButton unsubscribeButton; // Button for self-unsubscribing from chats
+    private JButton updateProfileButton; // Button for updating user profile
     private JComboBox<String> recipientComboBox; // Dropdown for selecting message recipients
     private JComboBox<String> chatComboBox; // Dropdown for selecting chats to subscribe/unsubscribe
     private JCheckBox privateMessageCheckBox; // Checkbox to toggle private messaging
@@ -35,6 +36,7 @@ public class ChatWindow extends JFrame {
     private ChatService chatService; // RMI chat service
     private services.SubscriptionService subscriptionService; // Subscription service for observer pattern
     private ChatWindowObserver observer; // Observer for subscription events
+    private network.ChatClientCallback callback; // Callback for receiving messages from the server
 
     public ChatWindow(User user) {
         this.user = user;
@@ -46,22 +48,51 @@ public class ChatWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        // Create components first to avoid NullPointerException in displayMessage
+        messageArea = new JTextArea();
+        messageArea.setEditable(false); // Prevent editing of received messages
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+
+        messageField = new JTextField(30);
+        sendButton = new JButton("Send");
+        leaveChatButton = new JButton("Leave Chat");
+        updateProfileButton = new JButton("Update Profile");
+
         // Create and register the observer
         this.observer = new ChatWindowObserver(this);
         subscriptionService.addObserver(this.observer);
 
         // Connect to the RMI chat service
+        boolean isConnected = false;
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             chatService = (ChatService) registry.lookup("ChatService");
+
+            // Create and register the callback
+            callback = new network.ChatClientCallbackImpl(this);
+            chatService.registerCallback(user.getNickname(), callback);
 
             // Notify that the user has joined
             chatService.notifyUserJoined(user.getNickname());
 
             // Add the current user to the connected users list
             connectedUsers.add(user.getNickname());
+
+            // Inform the user that they are connected to the chat server
+            System.out.println("Successfully connected to chat server");
+            isConnected = true;
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to connect to chat server: " + e.getMessage());
+            // Inform the user about the connection failure but allow them to continue in local mode
+            String errorMsg = "Failed to connect to chat server: " + e.getMessage() + 
+                "\n\nYou can still use the chat window in local mode, but messages will not be sent to other users.";
+            JOptionPane.showMessageDialog(this, errorMsg, "Connection Error", JOptionPane.WARNING_MESSAGE);
+
+            // Add the current user to the connected users list for local operation
+            connectedUsers.add(user.getNickname());
+
+            // Log the error for debugging
+            System.err.println("Failed to connect to chat server: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -72,16 +103,6 @@ public class ChatWindow extends JFrame {
                 leaveChat();
             }
         });
-
-        // Create components
-        messageArea = new JTextArea();
-        messageArea.setEditable(false); // Prevent editing of received messages
-        messageArea.setLineWrap(true);
-        messageArea.setWrapStyleWord(true);
-
-        messageField = new JTextField(30);
-        sendButton = new JButton("Send");
-        leaveChatButton = new JButton("Leave Chat");
 
         // Create subscription components
         subscribeButton = new JButton("Subscribe");
@@ -160,6 +181,7 @@ public class ChatWindow extends JFrame {
         inputPanel.add(messageField);
         inputPanel.add(sendButton);
         inputPanel.add(leaveChatButton);
+        inputPanel.add(updateProfileButton);
 
         // Create a panel for the bottom section with private messaging and subscription controls
         JPanel bottomPanel = new JPanel();
@@ -181,6 +203,13 @@ public class ChatWindow extends JFrame {
         // Display a welcome message when the user joins
         displayMessage("Chat started at: " + LocalDateTime.now());
         displayMessage(user.getNickname() + " has joined: " + LocalDateTime.now());
+
+        // Display connection status message
+        if (chatService != null) {
+            displayMessage("Connected to chat server successfully.");
+        } else {
+            displayMessage("WARNING: Not connected to chat server. Messages will only be displayed locally.");
+        }
 
         // Button actions
         sendButton.addActionListener(new ActionListener() {
@@ -219,10 +248,19 @@ public class ChatWindow extends JFrame {
                 sendMessage();
             }
         });
+
+        // Add action listener for update profile button
+        updateProfileButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose(); // Close chat window
+                new ProfileUpdateScreen(user).setVisible(true); // Open profile update screen
+            }
+        });
     }
 
     // Method to display a message in the chat window
-    private void displayMessage(String message) {
+    public void displayMessage(String message) {
         messageArea.append(message + "\n");
 
         // Check if this is a user join notification
@@ -265,23 +303,44 @@ public class ChatWindow extends JFrame {
             boolean isPrivate = privateMessageCheckBox.isSelected();
             String recipient = (String) recipientComboBox.getSelectedItem();
 
-            if (isPrivate && recipient != null && !recipient.equals("Everyone")) {
-                // Send a private message to the selected recipient
-                chatService.sendPrivateMessage(user.getNickname(), recipient, message);
+            // Check if chatService is available
+            if (chatService == null) {
+                // If chatService is not available, just display the message locally
+                if (isPrivate && recipient != null && !recipient.equals("Everyone")) {
+                    displayMessage("[Private to " + recipient + "] " + user.getNickname() + ": " + message);
+                } else {
+                    displayMessage(user.getNickname() + ": " + message);
+                }
 
-                // Display the private message locally
-                displayMessage("[Private to " + recipient + "] " + user.getNickname() + ": " + message);
+                // Show a warning that the message was not sent to the server
+                JOptionPane.showMessageDialog(this, 
+                    "Message displayed locally only. Not connected to chat server.", 
+                    "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
-                // Broadcast the message to all users via the chat service
-                chatService.broadcastMessage(user.getNickname() + ": " + message);
+                // If chatService is available, send the message to the server
+                if (isPrivate && recipient != null && !recipient.equals("Everyone")) {
+                    // Send a private message to the selected recipient
+                    chatService.sendPrivateMessage(user.getNickname(), recipient, message);
 
-                // Display the message locally
-                displayMessage(user.getNickname() + ": " + message);
+                    // Display the private message locally
+                    displayMessage("[Private to " + recipient + "] " + user.getNickname() + ": " + message);
+                } else {
+                    // Broadcast the message to all users via the chat service
+                    chatService.broadcastMessage(user.getNickname() + ": " + message);
+
+                    // Display the message locally
+                    displayMessage(user.getNickname() + ": " + message);
+                }
             }
 
             messageField.setText(""); // Clear the input field
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to send message: " + e.getMessage());
+            // Display the message locally even if sending to server fails
+            displayMessage(user.getNickname() + ": " + message);
+
+            JOptionPane.showMessageDialog(this, 
+                "Failed to send message to server: " + e.getMessage() + "\nMessage displayed locally only.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
@@ -294,9 +353,25 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            // Notify the server that the user has left
+            // Notify the server that the user has left (if connected)
             if (chatService != null) {
-                chatService.notifyUserLeft(user.getNickname());
+                try {
+                    // Unregister the callback before notifying that the user has left
+                    if (callback != null) {
+                        try {
+                            chatService.unregisterCallback(user.getNickname());
+                        } catch (Exception ex) {
+                            System.err.println("Error unregistering callback: " + ex.getMessage());
+                        }
+                    }
+
+                    chatService.notifyUserLeft(user.getNickname());
+                } catch (Exception e) {
+                    System.err.println("Error notifying server about user leaving: " + e.getMessage());
+                    // Continue with local processing even if server notification fails
+                }
+            } else {
+                System.out.println("Chat server not connected. User leaving handled locally only.");
             }
 
             // Display a message indicating that the user has left
@@ -315,12 +390,16 @@ public class ChatWindow extends JFrame {
                 saveChatToFile(endTime);
             }
         } catch (Exception e) {
-            System.err.println("Error notifying server about user leaving: " + e.getMessage());
+            System.err.println("Error during chat leaving process: " + e.getMessage());
             e.printStackTrace();
         } finally {
             // Unregister the observer
             if (subscriptionService != null && observer != null) {
-                subscriptionService.removeObserver(observer);
+                try {
+                    subscriptionService.removeObserver(observer);
+                } catch (Exception e) {
+                    System.err.println("Error removing observer: " + e.getMessage());
+                }
             }
 
             isChatActive = false; // Mark chat as inactive

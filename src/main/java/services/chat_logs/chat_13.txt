@@ -1,0 +1,14 @@
+Chat started at: 2025-04-17T17:52:49.981479
+ik has joined: 2025-04-17T17:52:49.982481200
+Connected to chat server successfully.
+ik: hi
+ik: hi
+ik: hi
+ik: hi
+ik: hello
+ik: hello
+ik has unsubscribed from this chat.
+ik: hi
+ik: hi
+ik left: 2025-04-17T17:55:16.570428800
+Chat stopped at: 2025-04-17T17:55:16.573422100

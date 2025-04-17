@@ -18,6 +18,7 @@ public class AdminPanel extends JFrame {
     private JButton subscribeUserButton;
     private JButton unsubscribeUserButton;
     private JButton removeUserButton;
+    private JButton backButton;
 
     public AdminPanel() {
         setTitle("Admin Panel");
@@ -31,15 +32,17 @@ public class AdminPanel extends JFrame {
         subscribeUserButton = new JButton("Subscribe User");
         unsubscribeUserButton = new JButton("Unsubscribe User");
         removeUserButton = new JButton("Remove User");
+        backButton = new JButton("Back to Login");
 
         // Layout setup
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(5, 1, 10, 10));
+        panel.setLayout(new GridLayout(6, 1, 10, 10));
         panel.add(createChatButton);
         panel.add(viewUsersButton);
         panel.add(subscribeUserButton);
         panel.add(unsubscribeUserButton);
         panel.add(removeUserButton);
+        panel.add(backButton);
 
         add(panel);
 
@@ -79,8 +82,8 @@ public class AdminPanel extends JFrame {
                 try {
                     int userId = Integer.parseInt(userIdInput);
                     int chatId = Integer.parseInt(chatIdInput);
-                    User user = userService.getAllUsers().stream().filter(u -> u.getId() == userId).findFirst().orElse(null);
-                    Chat chat = chatService.startChat(); // Replace with actual chat retrieval logic
+                    User user = userService.getUserById(userId);
+                    Chat chat = chatService.getChatById(chatId);
                     if (user != null && chat != null) {
                         subscriptionService.subscribeUserToChat(user, chat);
                         JOptionPane.showMessageDialog(AdminPanel.this, "User subscribed successfully!");
@@ -101,8 +104,8 @@ public class AdminPanel extends JFrame {
                 try {
                     int userId = Integer.parseInt(userIdInput);
                     int chatId = Integer.parseInt(chatIdInput);
-                    User user = userService.getAllUsers().stream().filter(u -> u.getId() == userId).findFirst().orElse(null);
-                    Chat chat = chatService.startChat(); // Replace with actual chat retrieval logic
+                    User user = userService.getUserById(userId);
+                    Chat chat = chatService.getChatById(chatId);
                     if (user != null && chat != null) {
                         subscriptionService.unsubscribeUserFromChat(user, chat);
                         JOptionPane.showMessageDialog(AdminPanel.this, "User unsubscribed successfully!");
@@ -121,11 +124,23 @@ public class AdminPanel extends JFrame {
                 String userIdInput = JOptionPane.showInputDialog("Enter User ID:");
                 try {
                     int userId = Integer.parseInt(userIdInput);
-                    userService.deleteUser(userId);
-                    JOptionPane.showMessageDialog(AdminPanel.this, "User removed successfully!");
+                    boolean success = userService.deleteUser(userId);
+                    if (success) {
+                        JOptionPane.showMessageDialog(AdminPanel.this, "User removed successfully!");
+                    } else {
+                        JOptionPane.showMessageDialog(AdminPanel.this, "User not found or could not be removed.");
+                    }
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(AdminPanel.this, "Invalid input.");
                 }
+            }
+        });
+
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose(); // Close admin panel
+                new LoginScreen().setVisible(true); // Open login screen
             }
         });
     }
