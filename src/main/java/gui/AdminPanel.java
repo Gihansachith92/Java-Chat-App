@@ -23,20 +23,20 @@ public class AdminPanel extends JFrame {
     private JButton editUserButton;
     private JButton backButton;
 
-    // WhatsApp colors
-    private static final Color WHATSAPP_GREEN = new Color(0, 168, 132);
-    private static final Color WHATSAPP_LIGHT_GREEN = new Color(220, 248, 198);
-    private static final Color WHATSAPP_BACKGROUND = new Color(230, 230, 230);
-    private static final Color WHATSAPP_HEADER = new Color(32, 44, 51);
-    private static final Color WHATSAPP_MESSAGE_TEXT = new Color(0, 0, 0);
+    // Professional/Enterprise theme colors
+    private static final Color THEME_PRIMARY = new Color(59, 89, 152);  // Dark blue
+    private static final Color THEME_SECONDARY = new Color(223, 227, 238);  // Light blue-gray
+    private static final Color THEME_BACKGROUND = new Color(240, 242, 245);  // Very light gray
+    private static final Color THEME_HEADER = new Color(35, 53, 91);  // Darker blue
+    private static final Color THEME_TEXT = new Color(33, 33, 33);  // Dark gray for text
 
     public AdminPanel() {
-        setTitle("WhatsApp Admin Panel");
+        setTitle("ChatNest Admin Panel");
         setSize(400, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create components with WhatsApp styling
+        // Create components with professional styling
         createChatButton = new JButton("Create Chat");
         styleButton(createChatButton);
 
@@ -61,13 +61,13 @@ public class AdminPanel extends JFrame {
         backButton = new JButton("Back to Login");
         styleButton(backButton);
 
-        // Create WhatsApp-style header
+        // Create professional-style header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(WHATSAPP_HEADER);
+        headerPanel.setBackground(THEME_HEADER);
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 
-        JLabel titleLabel = new JLabel("WhatsApp Admin");
+        JLabel titleLabel = new JLabel("ChatNest Admin");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
@@ -75,7 +75,7 @@ public class AdminPanel extends JFrame {
         // Create main content panel
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new GridLayout(8, 1, 10, 10));
-        contentPanel.setBackground(WHATSAPP_BACKGROUND);
+        contentPanel.setBackground(THEME_BACKGROUND);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         contentPanel.add(createChatButton);
@@ -90,7 +90,7 @@ public class AdminPanel extends JFrame {
         // Main panel with BorderLayout
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.setBackground(WHATSAPP_BACKGROUND);
+        panel.setBackground(THEME_BACKGROUND);
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(contentPanel, BorderLayout.CENTER);
 
@@ -298,9 +298,9 @@ public class AdminPanel extends JFrame {
         SwingUtilities.invokeLater(() -> new AdminPanel().setVisible(true));
     }
 
-    // Helper method to style buttons with WhatsApp theme
+    // Helper method to style buttons with professional theme
     private void styleButton(JButton button) {
-        button.setBackground(WHATSAPP_GREEN);
+        button.setBackground(THEME_PRIMARY);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);

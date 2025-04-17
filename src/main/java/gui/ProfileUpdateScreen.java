@@ -15,15 +15,15 @@ import java.io.File;
  */
 public class ProfileUpdateScreen extends JFrame {
 
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JTextField nicknameField;
-    private JButton updateButton;
-    private JButton uploadPictureButton;
+    protected JTextField usernameField;
+    protected JPasswordField passwordField;
+    protected JTextField nicknameField;
+    protected JButton updateButton;
+    protected JButton uploadPictureButton;
     protected JButton backButton;
-    private JLabel profilePictureLabel;
-    private String profilePicturePath;
-    private User user;
+    protected JLabel profilePictureLabel;
+    protected String profilePicturePath;
+    protected User user;
 
     // Professional/Enterprise theme colors
     private static final Color THEME_PRIMARY = new Color(59, 89, 152);  // Dark blue
