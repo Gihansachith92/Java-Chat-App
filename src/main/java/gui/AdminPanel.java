@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class AdminPanel extends JFrame {
 
@@ -19,6 +20,7 @@ public class AdminPanel extends JFrame {
     private JButton subscribeUserButton;
     private JButton unsubscribeUserButton;
     private JButton removeUserButton;
+    private JButton editUserButton;
     private JButton backButton;
 
     // WhatsApp colors
@@ -53,6 +55,9 @@ public class AdminPanel extends JFrame {
         removeUserButton = new JButton("Remove User");
         styleButton(removeUserButton);
 
+        editUserButton = new JButton("Edit User Profile");
+        styleButton(editUserButton);
+
         backButton = new JButton("Back to Login");
         styleButton(backButton);
 
@@ -69,7 +74,7 @@ public class AdminPanel extends JFrame {
 
         // Create main content panel
         JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new GridLayout(7, 1, 10, 10));
+        contentPanel.setLayout(new GridLayout(8, 1, 10, 10));
         contentPanel.setBackground(WHATSAPP_BACKGROUND);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -79,6 +84,7 @@ public class AdminPanel extends JFrame {
         contentPanel.add(subscribeUserButton);
         contentPanel.add(unsubscribeUserButton);
         contentPanel.add(removeUserButton);
+        contentPanel.add(editUserButton);
         contentPanel.add(backButton);
 
         // Main panel with BorderLayout
@@ -221,6 +227,60 @@ public class AdminPanel extends JFrame {
                     }
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(AdminPanel.this, "Invalid input.");
+                }
+            }
+        });
+
+        editUserButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Get all users
+                List<User> users = userService.getAllUsers();
+
+                if (users.isEmpty()) {
+                    JOptionPane.showMessageDialog(AdminPanel.this, "No users found in the system.");
+                    return;
+                }
+
+                // Create a list of user display strings (ID + Nickname)
+                String[] userOptions = new String[users.size()];
+                for (int i = 0; i < users.size(); i++) {
+                    User user = users.get(i);
+                    userOptions[i] = "ID: " + user.getId() + " - " + user.getNickname();
+                }
+
+                // Show user selection dialog
+                String selectedUserString = (String) JOptionPane.showInputDialog(
+                    AdminPanel.this,
+                    "Select a user to edit:",
+                    "Edit User Profile",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    userOptions,
+                    userOptions[0]
+                );
+
+                if (selectedUserString == null) {
+                    return; // User canceled the dialog
+                }
+
+                // Extract user ID from the selected string
+                int userId = Integer.parseInt(selectedUserString.substring(
+                    selectedUserString.indexOf("ID: ") + 4, 
+                    selectedUserString.indexOf(" - ")
+                ));
+
+                // Get the selected user
+                User selectedUser = userService.getUserById(userId);
+
+                if (selectedUser != null) {
+                    // Open profile update screen for the selected user
+                    dispose(); // Close admin panel
+
+                    // Open the admin profile update screen for the selected user
+                    new AdminProfileUpdateScreen(selectedUser).setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(AdminPanel.this, "User not found.");
                 }
             }
         });
