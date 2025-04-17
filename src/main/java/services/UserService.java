@@ -104,4 +104,24 @@ public class UserService {
             return false;
         }
     }
+
+    // Get a user by nickname
+    public User getUserByNickname(String nickname) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM User WHERE nickname = :nickname";
+            User user = session.createQuery(hql, User.class)
+                    .setParameter("nickname", nickname)
+                    .uniqueResult();
+
+            if (user != null) {
+                return user;
+            } else {
+                System.out.println("User not found with nickname: " + nickname);
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

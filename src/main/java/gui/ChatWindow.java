@@ -36,6 +36,8 @@ public class ChatWindow extends JFrame {
     private services.SubscriptionService subscriptionService; // Subscription service for observer pattern
     private ChatWindowObserver observer; // Observer for subscription events
     private network.ChatClientCallback callback; // Callback for receiving messages from the server
+    private services.UserService userService; // User service for getting user information
+    private models.Chat currentChat; // The current chat the user is viewing
 
     // Professional/Enterprise theme colors
     private static final Color THEME_PRIMARY = new Color(59, 89, 152);  // Dark blue
@@ -48,6 +50,7 @@ public class ChatWindow extends JFrame {
         this.user = user;
         this.connectedUsers = new ArrayList<>();
         this.subscriptionService = new services.SubscriptionService();
+        this.userService = new services.UserService();
 
         setTitle("ChatNest - " + user.getNickname());
         setSize(400, 650); // More phone-like dimensions
@@ -157,6 +160,20 @@ public class ChatWindow extends JFrame {
 
         // Populate chat dropdown with available chats
         populateChatsDropdown();
+
+        // Add action listener to chat combo box
+        chatComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateCurrentChatFromComboBox();
+            }
+        });
+
+        // Initialize current chat if user is already subscribed to any chat
+        if (chatComboBox.getItemCount() > 0) {
+            chatComboBox.setSelectedIndex(0);
+            updateCurrentChatFromComboBox();
+        }
 
         // No private messaging components needed for group chat
 
@@ -359,6 +376,27 @@ public class ChatWindow extends JFrame {
         });
     }
 
+    // Helper method to get a user's profile picture as an icon
+    private ImageIcon getUserProfileIcon(String nickname, int size) {
+        try {
+            User messageUser = userService.getUserByNickname(nickname);
+            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                try {
+                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
+                    // Resize the image to fit
+                    Image img = profilePic.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
+                    return new ImageIcon(img);
+                } catch (Exception e) {
+                    // If image loading fails, return null
+                    return null;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting user profile icon: " + e.getMessage());
+        }
+        return null;
+    }
+
     // Method to display a message in the chat window with professional formatting
     public void displayMessage(String message) {
         // Format system messages differently
@@ -375,8 +413,20 @@ public class ChatWindow extends JFrame {
         // Format user messages as chat bubbles
         else if (message.contains(":")) {
             // Try to extract the sender's nickname
-            String sender = message.substring(0, message.indexOf(":")).trim();
-            String content = message.substring(message.indexOf(":") + 1).trim();
+            String sender;
+            String content;
+            try {
+                sender = message.substring(0, message.indexOf(":")).trim();
+                content = message.substring(message.indexOf(":") + 1).trim();
+            } catch (Exception e) {
+                // If there's an error extracting sender and content, use defaults
+                sender = user.getNickname();
+                content = message;
+            }
+
+            // Get current time for timestamp
+            LocalDateTime now = LocalDateTime.now();
+            String timestamp = now.getHour() + ":" + String.format("%02d", now.getMinute());
 
             // Format based on who sent the message
             if (sender.equals(user.getNickname())) {
@@ -390,8 +440,12 @@ public class ChatWindow extends JFrame {
                 }
 
                 messageArea.append(getSpaces(50) + "└──────────────────────┘\n");
-                messageArea.append(getSpaces(50) + "You - " + LocalDateTime.now().getHour() + ":" + 
-                                  String.format("%02d", LocalDateTime.now().getMinute()) + "\n");
+
+                // Add user profile info and timestamp
+                String profileInfo = "You - " + timestamp;
+                messageArea.append(getSpaces(50) + profileInfo + "\n");
+
+                // We already have the current user's profile picture displayed in the header
             } else {
                 // Message from other user - left-aligned, white bubble
                 messageArea.append("\n┌──────────────────────┐\n");
@@ -403,12 +457,44 @@ public class ChatWindow extends JFrame {
                 }
 
                 messageArea.append("└──────────────────────┘\n");
-                messageArea.append(sender + " - " + LocalDateTime.now().getHour() + ":" + 
-                                  String.format("%02d", LocalDateTime.now().getMinute()) + "\n");
+
+                // Add sender's profile info and timestamp
+                String profileInfo = sender + " - " + timestamp;
+                messageArea.append(profileInfo + "\n");
+
+                // Try to get the sender's profile information
+                User senderUser = userService.getUserByNickname(sender);
+                if (senderUser != null) {
+                    // We can't directly display images in JTextArea, so we'll just indicate that 
+                    // the profile picture is available
+                    if (senderUser.getProfilePicture() != null && !senderUser.getProfilePicture().isEmpty()) {
+                        messageArea.append("👤 " + sender + " has a profile picture\n");
+                    }
+                }
             }
         } else {
-            // Regular message without sender info
-            messageArea.append("\n" + message + "\n");
+            // Regular message without sender info - treat it as a message from the current user
+            String sender = user.getNickname();
+            String content = message;
+
+            // Get current time for timestamp
+            LocalDateTime now = LocalDateTime.now();
+            String timestamp = now.getHour() + ":" + String.format("%02d", now.getMinute());
+
+            // Format as a message from the current user
+            messageArea.append("\n" + getSpaces(50) + "┌──────────────────────┐\n");
+
+            // Split long messages into multiple lines
+            String[] lines = splitMessage(content, 20);
+            for (String line : lines) {
+                messageArea.append(getSpaces(50) + "│ " + line + getSpaces(20 - line.length()) + " │\n");
+            }
+
+            messageArea.append(getSpaces(50) + "└──────────────────────┘\n");
+
+            // Add user profile info and timestamp
+            String profileInfo = "You - " + timestamp;
+            messageArea.append(getSpaces(50) + profileInfo + "\n");
         }
 
         // Check if this is a user join notification
@@ -475,6 +561,22 @@ public class ChatWindow extends JFrame {
             return;
         }
 
+        // Check if a chat is selected
+        if (currentChat == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Please subscribe to a chat first before sending messages.", 
+                "No Chat Selected", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Check if the user is subscribed to the current chat
+        if (!subscriptionService.isUserSubscribedToChat(user, currentChat)) {
+            JOptionPane.showMessageDialog(this, 
+                "You are not subscribed to this chat. Please subscribe first.", 
+                "Not Subscribed", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         try {
             // Check if chatService is available
             if (chatService == null) {
@@ -487,10 +589,8 @@ public class ChatWindow extends JFrame {
                     "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
                 // If chatService is available, broadcast the message to all users via the chat service
+                // The message will be displayed via the callback, so we don't need to display it locally
                 chatService.broadcastMessage(user.getNickname() + ": " + message);
-
-                // Display the message locally
-                displayMessage(user.getNickname() + ": " + message);
             }
 
             messageField.setText(""); // Clear the input field
@@ -661,9 +761,30 @@ public class ChatWindow extends JFrame {
             models.Chat chat = getChatById(chatId);
 
             if (chat != null) {
-                // Subscribe the user to the chat
-                subscriptionService.subscribeUserToChat(user, chat);
-                JOptionPane.showMessageDialog(this, "You have subscribed to Chat " + chatId);
+                // Check if the user is already subscribed to this chat
+                boolean alreadySubscribed = subscriptionService.isUserSubscribedToChat(user, chat);
+
+                // Check if this is already the current chat
+                boolean isCurrentChat = (currentChat != null && currentChat.getId() == chat.getId());
+
+                if (!alreadySubscribed) {
+                    // Subscribe the user to the chat
+                    subscriptionService.subscribeUserToChat(user, chat);
+                    JOptionPane.showMessageDialog(this, "You have subscribed to Chat " + chatId);
+                    // Display a message in the chat window
+                    displayMessage("You are now viewing Chat " + chatId + ". Only subscribers can send messages to this chat.");
+                } else {
+                    // User is already subscribed, just switch to this chat
+                    JOptionPane.showMessageDialog(this, "You are already subscribed to Chat " + chatId);
+
+                    // Only display the message if this is not already the current chat
+                    if (!isCurrentChat) {
+                        displayMessage("You are now viewing Chat " + chatId + ".");
+                    }
+                }
+
+                // Set this as the current chat
+                this.currentChat = chat;
             } else {
                 JOptionPane.showMessageDialog(this, "Chat not found.");
             }
@@ -709,6 +830,49 @@ public class ChatWindow extends JFrame {
             System.err.println("Error getting chat by ID: " + e.getMessage());
             e.printStackTrace();
             return null;
+        }
+    }
+
+    // Method to update the current chat from the combo box selection
+    private void updateCurrentChatFromComboBox() {
+        if (chatComboBox.getSelectedItem() == null) {
+            return;
+        }
+
+        try {
+            // Get the selected chat ID
+            String chatItem = (String) chatComboBox.getSelectedItem();
+            int chatId = Integer.parseInt(chatItem.replace("Chat ", ""));
+
+            // Get the chat from the database
+            models.Chat chat = getChatById(chatId);
+
+            if (chat != null) {
+                // Check if the user is already subscribed to this chat
+                boolean alreadySubscribed = subscriptionService.isUserSubscribedToChat(user, chat);
+
+                // Check if this is already the current chat
+                boolean isCurrentChat = (currentChat != null && currentChat.getId() == chat.getId());
+
+                if (alreadySubscribed) {
+                    // User is already subscribed, set this as the current chat
+                    this.currentChat = chat;
+
+                    // Only display the message if this is not already the current chat
+                    if (!isCurrentChat) {
+                        displayMessage("You are now viewing Chat " + chatId + ".");
+                    }
+                } else {
+                    // User is not subscribed, don't update the current chat
+                    // Only display the message if this is not already the current chat
+                    if (!isCurrentChat) {
+                        displayMessage("You need to subscribe to Chat " + chatId + " before you can send messages.");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating current chat: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

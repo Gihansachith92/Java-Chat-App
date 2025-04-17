@@ -65,13 +65,15 @@ public class SubscriptionService {
             Transaction transaction = session.beginTransaction();
 
             String hql = "FROM Subscription WHERE user.id = :userId AND chat.id = :chatId";
-            Subscription subscription = session.createQuery(hql, Subscription.class)
+            List<Subscription> subscriptions = session.createQuery(hql, Subscription.class)
                     .setParameter("userId", user.getId())
                     .setParameter("chatId", chat.getId())
-                    .uniqueResult();
+                    .list();
 
-            if (subscription != null) {
-                session.delete(subscription);
+            if (!subscriptions.isEmpty()) {
+                for (Subscription subscription : subscriptions) {
+                    session.delete(subscription);
+                }
                 System.out.println("User " + user.getNickname() + " unsubscribed from chat " + chat.getId());
 
                 // Notify observers
@@ -109,6 +111,34 @@ public class SubscriptionService {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    // Check if a user is subscribed to a specific chat
+    public boolean isUserSubscribedToChat(User user, Chat chat) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM Subscription WHERE user.id = :userId AND chat.id = :chatId";
+            List<Subscription> subscriptions = session.createQuery(hql, Subscription.class)
+                    .setParameter("userId", user.getId())
+                    .setParameter("chatId", chat.getId())
+                    .list();
+            return !subscriptions.isEmpty();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Get all users subscribed to a specific chat
+    public List<User> getUsersSubscribedToChat(Chat chat) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT s.user FROM Subscription s WHERE s.chat.id = :chatId";
+            return session.createQuery(hql, User.class)
+                    .setParameter("chatId", chat.getId())
+                    .list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 }
