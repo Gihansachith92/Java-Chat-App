@@ -12,4 +12,7 @@ public interface ChatService extends Remote {
 
     // Method to notify when a user leaves a chat
     void notifyUserLeft(String nickname) throws RemoteException;
+
+    // Method to send a private message to a specific user
+    void sendPrivateMessage(String senderNickname, String recipientNickname, String message) throws RemoteException;
 }

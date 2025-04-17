@@ -34,4 +34,17 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatService {
         System.out.println(nickname + " has left the chat.");
         broadcastMessage(nickname + " has left the chat.");
     }
+
+    @Override
+    public void sendPrivateMessage(String senderNickname, String recipientNickname, String message) throws RemoteException {
+        // Check if the recipient is connected
+        if (connectedUsers.contains(recipientNickname)) {
+            System.out.println("[Private] From " + senderNickname + " to " + recipientNickname + ": " + message);
+            System.out.println("Private message sent to " + recipientNickname + ": " + message);
+        } else {
+            System.out.println("[Private] Failed to send message from " + senderNickname + 
+                               " to " + recipientNickname + ": User not connected");
+            // Optionally, we could notify the sender that the recipient is not connected
+        }
+    }
 }

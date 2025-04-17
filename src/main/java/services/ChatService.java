@@ -38,7 +38,7 @@ public class ChatService {
             chat.setEndTime(LocalDateTime.now());
 
             // Save log to file
-            String filePath = "C:\\Users\\Admin\\Desktop\\git uploads\\ChatApplication\\src\\main\\java\\services\\chat_logs\\chat_" + chat.getId() + ".txt";
+            String filePath = "src\\main\\java\\services\\chat_logs\\chat_" + chat.getId() + ".txt";
             try (FileWriter writer = new FileWriter(filePath)) {
                 writer.write(logContent);
                 System.out.println("Chat log saved to " + filePath);

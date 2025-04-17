@@ -7,9 +7,36 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import utils.HibernateUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SubscriptionService {
+
+    private List<ChatObserver> observers = new ArrayList<>();
+
+    // Add an observer
+    public void addObserver(ChatObserver observer) {
+        observers.add(observer);
+    }
+
+    // Remove an observer
+    public void removeObserver(ChatObserver observer) {
+        observers.remove(observer);
+    }
+
+    // Notify observers when a user is subscribed to a chat
+    private void notifySubscribe(User user, Chat chat) {
+        for (ChatObserver observer : observers) {
+            observer.onSubscribe(user, chat);
+        }
+    }
+
+    // Notify observers when a user is unsubscribed from a chat
+    private void notifyUnsubscribe(User user, Chat chat) {
+        for (ChatObserver observer : observers) {
+            observer.onUnsubscribe(user, chat);
+        }
+    }
 
     // Subscribe a user to a chat
     public void subscribeUserToChat(User user, Chat chat) {
@@ -24,6 +51,9 @@ public class SubscriptionService {
             transaction.commit();
 
             System.out.println("User " + user.getNickname() + " subscribed to chat " + chat.getId());
+
+            // Notify observers
+            notifySubscribe(user, chat);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -43,6 +73,9 @@ public class SubscriptionService {
             if (subscription != null) {
                 session.delete(subscription);
                 System.out.println("User " + user.getNickname() + " unsubscribed from chat " + chat.getId());
+
+                // Notify observers
+                notifyUnsubscribe(user, chat);
             } else {
                 System.out.println("Subscription not found.");
             }
