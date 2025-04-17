@@ -86,22 +86,18 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatService {
     }
 
     @Override
-    public void sendPrivateMessage(String senderNickname, String recipientNickname, String message) throws RemoteException {
-        // Check if the recipient is connected
-        if (clientCallbacks.containsKey(recipientNickname)) {
-            System.out.println("[Private] From " + senderNickname + " to " + recipientNickname + ": " + message);
+    public void notifyNewChat(int chatId) throws RemoteException {
+        System.out.println("New chat created with ID: " + chatId);
 
+        // Notify all connected clients about the new chat
+        String newChatMessage = "A new chat (ID: " + chatId + ") has been created. Subscribe to join the conversation!";
+        for (Map.Entry<String, ChatClientCallback> entry : clientCallbacks.entrySet()) {
             try {
-                // Deliver the private message to the recipient
-                clientCallbacks.get(recipientNickname).receivePrivateMessage(senderNickname, message);
-                System.out.println("Private message sent to " + recipientNickname + ": " + message);
+                entry.getValue().receiveMessage(newChatMessage);
+                System.out.println("New chat notification sent to " + entry.getKey());
             } catch (RemoteException e) {
-                System.err.println("Error sending private message to " + recipientNickname + ": " + e.getMessage());
+                System.err.println("Error notifying " + entry.getKey() + " about new chat: " + e.getMessage());
             }
-        } else {
-            System.out.println("[Private] Failed to send message from " + senderNickname + 
-                               " to " + recipientNickname + ": User not connected");
-            // Optionally, we could notify the sender that the recipient is not connected
         }
     }
 }

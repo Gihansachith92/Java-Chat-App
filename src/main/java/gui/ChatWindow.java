@@ -27,10 +27,8 @@ public class ChatWindow extends JFrame {
     private JButton unsubscribeButton; // Button for self-unsubscribing from chats
     private JButton updateProfileButton; // Button for updating user profile
     private JButton backButton; // Button for navigating back to login screen
-    private JComboBox<String> recipientComboBox; // Dropdown for selecting message recipients
     private JComboBox<String> chatComboBox; // Dropdown for selecting chats to subscribe/unsubscribe
-    private JCheckBox privateMessageCheckBox; // Checkbox to toggle private messaging
-    private List<String> connectedUsers; // List of connected users for private messaging
+    private List<String> connectedUsers; // List of connected users in the chat
 
     private User user; // The logged-in user participating in the chat
     private boolean isChatActive = true; // To track if the user is still in the chat
@@ -160,21 +158,7 @@ public class ChatWindow extends JFrame {
         // Populate chat dropdown with available chats
         populateChatsDropdown();
 
-        // Create private messaging components
-        recipientComboBox = new JComboBox<>();
-        recipientComboBox.addItem("Everyone"); // Default option for broadcasting
-        recipientComboBox.setBackground(Color.WHITE);
-        recipientComboBox.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
-
-        privateMessageCheckBox = new JCheckBox("Private Message");
-        privateMessageCheckBox.setForeground(THEME_TEXT);
-        privateMessageCheckBox.setBackground(THEME_BACKGROUND);
-        privateMessageCheckBox.addActionListener(e -> {
-            recipientComboBox.setEnabled(privateMessageCheckBox.isSelected());
-        });
-
-        // Initially disable the recipient dropdown
-        recipientComboBox.setEnabled(false);
+        // No private messaging components needed for group chat
 
         // Layout setup
         JPanel panel = new JPanel();
@@ -275,17 +259,10 @@ public class ChatWindow extends JFrame {
         // Add action buttons panel to the message input panel
         messageInputPanel.add(actionButtonsPanel, BorderLayout.SOUTH);
 
-        // Create a panel for the controls (private messaging and subscription)
+        // Create a panel for the controls (subscription only)
         JPanel controlsPanel = new JPanel();
         controlsPanel.setLayout(new BorderLayout());
         controlsPanel.setBackground(THEME_BACKGROUND);
-
-        // Create a panel for private messaging controls
-        JPanel privateMessagePanel = new JPanel();
-        privateMessagePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        privateMessagePanel.setBackground(THEME_BACKGROUND);
-        privateMessagePanel.add(privateMessageCheckBox);
-        privateMessagePanel.add(recipientComboBox);
 
         // Create a panel for subscription controls
         JPanel subscriptionPanel = new JPanel();
@@ -298,14 +275,8 @@ public class ChatWindow extends JFrame {
         subscriptionPanel.add(subscribeButton);
         subscriptionPanel.add(unsubscribeButton);
 
-        // Add private messaging and subscription panels to the controls panel
-        JPanel controlsGridPanel = new JPanel();
-        controlsGridPanel.setLayout(new GridLayout(2, 1));
-        controlsGridPanel.setBackground(THEME_BACKGROUND);
-        controlsGridPanel.add(privateMessagePanel);
-        controlsGridPanel.add(subscriptionPanel);
-
-        controlsPanel.add(controlsGridPanel, BorderLayout.CENTER);
+        // Add subscription panel to the controls panel
+        controlsPanel.add(subscriptionPanel, BorderLayout.CENTER);
 
         // Create a panel for the bottom section
         JPanel bottomPanel = new JPanel();
@@ -388,7 +359,7 @@ public class ChatWindow extends JFrame {
         });
     }
 
-    // Method to display a message in the chat window with WhatsApp-style formatting
+    // Method to display a message in the chat window with professional formatting
     public void displayMessage(String message) {
         // Format system messages differently
         if (message.contains("Chat started at:") || 
@@ -407,12 +378,9 @@ public class ChatWindow extends JFrame {
             String sender = message.substring(0, message.indexOf(":")).trim();
             String content = message.substring(message.indexOf(":") + 1).trim();
 
-            // Check if this is a private message
-            boolean isPrivate = message.contains("[Private to");
-
             // Format based on who sent the message
-            if (sender.equals(user.getNickname()) || (isPrivate && message.contains(user.getNickname() + ":"))) {
-                // Message from current user - right-aligned, green bubble
+            if (sender.equals(user.getNickname())) {
+                // Message from current user - right-aligned, blue bubble
                 messageArea.append("\n" + getSpaces(50) + "┌──────────────────────┐\n");
 
                 // Split long messages into multiple lines
@@ -448,7 +416,6 @@ public class ChatWindow extends JFrame {
             String nickname = message.substring(0, message.indexOf(" has joined"));
             if (!nickname.equals(user.getNickname()) && !connectedUsers.contains(nickname)) {
                 connectedUsers.add(nickname);
-                recipientComboBox.addItem(nickname);
             }
         }
 
@@ -457,7 +424,6 @@ public class ChatWindow extends JFrame {
             String nickname = message.substring(0, message.indexOf(" has left"));
             if (connectedUsers.contains(nickname)) {
                 connectedUsers.remove(nickname);
-                recipientComboBox.removeItem(nickname);
             }
         }
 
@@ -510,37 +476,21 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            boolean isPrivate = privateMessageCheckBox.isSelected();
-            String recipient = (String) recipientComboBox.getSelectedItem();
-
             // Check if chatService is available
             if (chatService == null) {
                 // If chatService is not available, just display the message locally
-                if (isPrivate && recipient != null && !recipient.equals("Everyone")) {
-                    displayMessage("[Private to " + recipient + "] " + user.getNickname() + ": " + message);
-                } else {
-                    displayMessage(user.getNickname() + ": " + message);
-                }
+                displayMessage(user.getNickname() + ": " + message);
 
                 // Show a warning that the message was not sent to the server
                 JOptionPane.showMessageDialog(this, 
                     "Message displayed locally only. Not connected to chat server.", 
                     "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
-                // If chatService is available, send the message to the server
-                if (isPrivate && recipient != null && !recipient.equals("Everyone")) {
-                    // Send a private message to the selected recipient
-                    chatService.sendPrivateMessage(user.getNickname(), recipient, message);
+                // If chatService is available, broadcast the message to all users via the chat service
+                chatService.broadcastMessage(user.getNickname() + ": " + message);
 
-                    // Display the private message locally
-                    displayMessage("[Private to " + recipient + "] " + user.getNickname() + ": " + message);
-                } else {
-                    // Broadcast the message to all users via the chat service
-                    chatService.broadcastMessage(user.getNickname() + ": " + message);
-
-                    // Display the message locally
-                    displayMessage(user.getNickname() + ": " + message);
-                }
+                // Display the message locally
+                displayMessage(user.getNickname() + ": " + message);
             }
 
             messageField.setText(""); // Clear the input field
@@ -647,7 +597,6 @@ public class ChatWindow extends JFrame {
             // Add the user to the connected users list if not already present
             if (!connectedUsers.contains(user.getNickname())) {
                 connectedUsers.add(user.getNickname());
-                recipientComboBox.addItem(user.getNickname());
             }
 
             // Display a message indicating that the user has subscribed
@@ -659,7 +608,6 @@ public class ChatWindow extends JFrame {
     public void userUnsubscribed(User user) {
         // Remove the user from the connected users list
         connectedUsers.remove(user.getNickname());
-        recipientComboBox.removeItem(user.getNickname());
 
         // Display a message indicating that the user has unsubscribed
         displayMessage(user.getNickname() + " has unsubscribed from this chat.");

@@ -15,7 +15,7 @@ public interface ChatClientCallback extends Remote {
      * @throws RemoteException If a remote communication error occurs
      */
     void receiveMessage(String message) throws RemoteException;
-    
+
     /**
      * Called by the server to notify the client that a user has joined the chat.
      * 
@@ -23,7 +23,7 @@ public interface ChatClientCallback extends Remote {
      * @throws RemoteException If a remote communication error occurs
      */
     void userJoined(String nickname) throws RemoteException;
-    
+
     /**
      * Called by the server to notify the client that a user has left the chat.
      * 
@@ -31,13 +31,4 @@ public interface ChatClientCallback extends Remote {
      * @throws RemoteException If a remote communication error occurs
      */
     void userLeft(String nickname) throws RemoteException;
-    
-    /**
-     * Called by the server to deliver a private message to the client.
-     * 
-     * @param senderNickname The nickname of the sender
-     * @param message The private message
-     * @throws RemoteException If a remote communication error occurs
-     */
-    void receivePrivateMessage(String senderNickname, String message) throws RemoteException;
 }
