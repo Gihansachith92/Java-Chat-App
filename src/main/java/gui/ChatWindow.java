@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.time.LocalDateTime;
@@ -86,14 +87,14 @@ public class ChatWindow extends JFrame {
                     String text = messageArea.getText(start, end - start);
 
                     // Check if the line contains a profile picture indicator
-                    if (text.contains("[PIC]")) {
+                    if (text.contains("👤")) {
                         // Extract the nickname from the line
                         String nickname;
                         if (text.contains("You")) {
                             nickname = user.getNickname();
                         } else {
-                            // Extract nickname from format "[PIC] nickname - timestamp"
-                            nickname = text.substring(text.indexOf("[PIC]") + 6, text.lastIndexOf(" - ")).trim();
+                            // Extract nickname from format "👤 nickname - timestamp"
+                            nickname = text.substring(text.indexOf("👤") + 2, text.lastIndexOf(" - ")).trim();
                         }
 
                         // Show the profile picture
@@ -434,20 +435,48 @@ public class ChatWindow extends JFrame {
     // Helper method to get a user's profile picture as an icon
     private ImageIcon getUserProfileIcon(String nickname, int size) {
         try {
+            System.out.println("Getting profile icon for: " + nickname);
             User messageUser = userService.getUserByNickname(nickname);
-            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
-                try {
-                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
-                    // Resize the image to fit
-                    Image img = profilePic.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
-                    return new ImageIcon(img);
-                } catch (Exception e) {
-                    // If image loading fails, return null
-                    return null;
+            if (messageUser != null) {
+                System.out.println("User found: " + messageUser.getNickname());
+                if (messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                    System.out.println("Profile picture path: " + messageUser.getProfilePicture());
+
+                    // Check if the file exists
+                    File profilePicFile = new File(messageUser.getProfilePicture());
+                    if (!profilePicFile.exists()) {
+                        System.out.println("Profile picture file does not exist: " + profilePicFile.getAbsolutePath());
+                        return null;
+                    }
+
+                    try {
+                        // Create the profile picture with a direct path
+                        ImageIcon profilePic = new ImageIcon(profilePicFile.getAbsolutePath());
+                        System.out.println("Profile picture loaded, width: " + profilePic.getIconWidth() + ", height: " + profilePic.getIconHeight());
+
+                        // Check if the image was loaded successfully
+                        if (profilePic.getIconWidth() <= 0 || profilePic.getIconHeight() <= 0) {
+                            System.out.println("Failed to load profile picture");
+                            return null;
+                        }
+
+                        // Resize the image to fit
+                        Image img = profilePic.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
+                        return new ImageIcon(img);
+                    } catch (Exception e) {
+                        System.err.println("Error loading profile picture: " + e.getMessage());
+                        e.printStackTrace();
+                        return null;
+                    }
+                } else {
+                    System.out.println("User has no profile picture");
                 }
+            } else {
+                System.out.println("User not found: " + nickname);
             }
         } catch (Exception e) {
             System.err.println("Error getting user profile icon: " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
@@ -455,89 +484,271 @@ public class ChatWindow extends JFrame {
     // Method to display a user's profile picture in a popup window
     private void showProfilePicture(String nickname) {
         try {
+            System.out.println("Showing profile picture for: " + nickname);
             User messageUser = userService.getUserByNickname(nickname);
-            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
-                try {
-                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
+            if (messageUser != null) {
+                System.out.println("User found: " + messageUser.getNickname());
+                if (messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                    System.out.println("Profile picture path: " + messageUser.getProfilePicture());
 
-                    // Create a new frame to display the profile picture
-                    JFrame picFrame = new JFrame(nickname + "'s Profile Picture");
-                    picFrame.setSize(300, 300);
-                    picFrame.setLocationRelativeTo(this);
+                    // Check if the file exists
+                    File profilePicFile = new File(messageUser.getProfilePicture());
+                    if (!profilePicFile.exists()) {
+                        System.out.println("Profile picture file does not exist: " + profilePicFile.getAbsolutePath());
+                        JOptionPane.showMessageDialog(this, "Profile picture file not found: " + profilePicFile.getAbsolutePath(), "File Not Found", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
 
-                    // Create a label to display the profile picture
-                    JLabel picLabel = new JLabel();
-                    picLabel.setHorizontalAlignment(JLabel.CENTER);
+                    try {
+                        // Create the profile picture with a direct path
+                        ImageIcon profilePic = new ImageIcon(profilePicFile.getAbsolutePath());
+                        System.out.println("Profile picture loaded, width: " + profilePic.getIconWidth() + ", height: " + profilePic.getIconHeight());
 
-                    // Resize the image to fit the frame
-                    Image img = profilePic.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
-                    picLabel.setIcon(new ImageIcon(img));
+                        // Check if the image was loaded successfully
+                        if (profilePic.getIconWidth() <= 0 || profilePic.getIconHeight() <= 0) {
+                            System.out.println("Failed to load profile picture");
+                            JOptionPane.showMessageDialog(this, "Failed to load profile picture for " + nickname, "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
 
-                    // Add the label to the frame
-                    picFrame.add(picLabel);
+                        // Create a new frame to display the profile picture
+                        JFrame picFrame = new JFrame(nickname + "'s Profile Picture");
+                        picFrame.setSize(300, 300);
+                        picFrame.setLocationRelativeTo(this);
 
-                    // Show the frame
-                    picFrame.setVisible(true);
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Error loading profile picture: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        // Create a label to display the profile picture
+                        JLabel picLabel = new JLabel();
+                        picLabel.setHorizontalAlignment(JLabel.CENTER);
+
+                        // Resize the image to fit the frame
+                        Image img = profilePic.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
+                        picLabel.setIcon(new ImageIcon(img));
+
+                        // Add the label to the frame
+                        picFrame.add(picLabel);
+
+                        // Show the frame
+                        picFrame.setVisible(true);
+                        System.out.println("Profile picture displayed in popup window");
+                    } catch (Exception e) {
+                        System.err.println("Error loading profile picture: " + e.getMessage());
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Error loading profile picture: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    System.out.println("User has no profile picture");
+                    JOptionPane.showMessageDialog(this, "No profile picture available for " + nickname, "No Picture", JOptionPane.INFORMATION_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "No profile picture available for " + nickname, "No Picture", JOptionPane.INFORMATION_MESSAGE);
+                System.out.println("User not found: " + nickname);
+                JOptionPane.showMessageDialog(this, "User not found: " + nickname, "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
+            System.err.println("Error showing profile picture: " + e.getMessage());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error showing profile picture: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Method to display a user's profile picture in a floating window that stays open
-    private void showFloatingProfilePicture(String nickname, int x, int y) {
+    // Method to create a small, fixed JLabel with the profile picture
+    private void addProfilePictureToChat(String nickname, int x, int y) {
         try {
+            System.out.println("Adding profile picture for: " + nickname);
             User messageUser = userService.getUserByNickname(nickname);
-            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
-                try {
-                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
+            if (messageUser != null) {
+                System.out.println("User found: " + messageUser.getNickname());
+                if (messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                    System.out.println("Profile picture path: " + messageUser.getProfilePicture());
 
-                    // Create a new undecorated frame to display the profile picture
-                    JDialog picDialog = new JDialog(this, false);
-                    picDialog.setUndecorated(true);
-                    picDialog.setSize(100, 100);
+                    // Check if the file exists
+                    File profilePicFile = new File(messageUser.getProfilePicture());
+                    if (!profilePicFile.exists()) {
+                        System.out.println("Profile picture file does not exist: " + profilePicFile.getAbsolutePath());
 
-                    // Position the dialog near the message
-                    picDialog.setLocation(x, y);
+                        // Create a default profile picture
+                        JLabel picLabel = new JLabel("👤");
+                        picLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                        picLabel.setForeground(THEME_PRIMARY);
+                        picLabel.setHorizontalAlignment(JLabel.CENTER);
+                        picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
+                        picLabel.setSize(20, 20);
+                        picLabel.setLocation(x, y);
+                        picLabel.setOpaque(true);
+                        picLabel.setBackground(Color.WHITE);
 
-                    // Create a label to display the profile picture
-                    JLabel picLabel = new JLabel();
+                        // Add a mouse listener to show a larger profile picture when clicked
+                        picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                            @Override
+                            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                                JOptionPane.showMessageDialog(ChatWindow.this, 
+                                    "No profile picture available for " + nickname, 
+                                    "No Picture", JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        });
+
+                        // Get the layered pane
+                        JLayeredPane layeredPane = getLayeredPane();
+                        System.out.println("Layered pane obtained: " + layeredPane);
+
+                        // Add the label to the layered pane at a high layer
+                        layeredPane.add(picLabel, JLayeredPane.POPUP_LAYER);
+                        layeredPane.setComponentZOrder(picLabel, 0);
+                        layeredPane.repaint();
+                        System.out.println("Default profile picture added to layered pane");
+                        return;
+                    }
+
+                    try {
+                        // Create the profile picture with a direct path
+                        ImageIcon profilePic = new ImageIcon(profilePicFile.getAbsolutePath());
+                        System.out.println("Profile picture loaded, width: " + profilePic.getIconWidth() + ", height: " + profilePic.getIconHeight());
+
+                        // Check if the image was loaded successfully
+                        if (profilePic.getIconWidth() <= 0 || profilePic.getIconHeight() <= 0) {
+                            System.out.println("Failed to load profile picture, using default");
+
+                            // Create a default profile picture
+                            JLabel picLabel = new JLabel("👤");
+                            picLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                            picLabel.setForeground(THEME_PRIMARY);
+                            picLabel.setHorizontalAlignment(JLabel.CENTER);
+                            picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
+                            picLabel.setSize(20, 20);
+                            picLabel.setLocation(x, y);
+                            picLabel.setOpaque(true);
+                            picLabel.setBackground(Color.WHITE);
+
+                            // Add a mouse listener to show a larger profile picture when clicked
+                            picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                                @Override
+                                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                                    JOptionPane.showMessageDialog(ChatWindow.this, 
+                                        "Failed to load profile picture for " + nickname, 
+                                        "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            });
+
+                            // Get the layered pane
+                            JLayeredPane layeredPane = getLayeredPane();
+                            System.out.println("Layered pane obtained: " + layeredPane);
+
+                            // Add the label to the layered pane at a high layer
+                            layeredPane.add(picLabel, JLayeredPane.POPUP_LAYER);
+                            layeredPane.setComponentZOrder(picLabel, 0);
+                            layeredPane.repaint();
+                            System.out.println("Default profile picture added to layered pane");
+                            return;
+                        }
+
+                        // Create a label to display the profile picture
+                        JLabel picLabel = new JLabel();
+                        picLabel.setHorizontalAlignment(JLabel.CENTER);
+                        picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
+                        picLabel.setSize(20, 20);
+                        picLabel.setLocation(x, y);
+                        picLabel.setOpaque(true);
+                        picLabel.setBackground(Color.WHITE);
+                        System.out.println("Label created at position: " + x + ", " + y);
+
+                        // Resize the image to fit
+                        Image img = profilePic.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+                        picLabel.setIcon(new ImageIcon(img));
+
+                        // Add a mouse listener to show a larger profile picture when clicked
+                        picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                            @Override
+                            public void mouseClicked(java.awt.event.MouseEvent e) {
+                                showProfilePicture(nickname);
+                            }
+                        });
+
+                        // Get the layered pane
+                        JLayeredPane layeredPane = getLayeredPane();
+                        System.out.println("Layered pane obtained: " + layeredPane);
+
+                        // Add the label to the layered pane at a high layer
+                        layeredPane.add(picLabel, JLayeredPane.POPUP_LAYER);
+                        layeredPane.setComponentZOrder(picLabel, 0);
+                        layeredPane.repaint();
+                        System.out.println("Profile picture added to layered pane");
+                    } catch (Exception e) {
+                        System.err.println("Error adding profile picture to chat: " + e.getMessage());
+                        e.printStackTrace();
+
+                        // Create a default profile picture
+                        JLabel picLabel = new JLabel("👤");
+                        picLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                        picLabel.setForeground(THEME_PRIMARY);
+                        picLabel.setHorizontalAlignment(JLabel.CENTER);
+                        picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
+                        picLabel.setSize(20, 20);
+                        picLabel.setLocation(x, y);
+                        picLabel.setOpaque(true);
+                        picLabel.setBackground(Color.WHITE);
+
+                        // Store the error message in a final variable
+                        final String errorMessage = e.getMessage();
+
+                        // Add a mouse listener to show a larger profile picture when clicked
+                        picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                            @Override
+                            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                                JOptionPane.showMessageDialog(ChatWindow.this, 
+                                    "Error loading profile picture: " + errorMessage, 
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+
+                        // Get the layered pane
+                        JLayeredPane layeredPane = getLayeredPane();
+                        System.out.println("Layered pane obtained: " + layeredPane);
+
+                        // Add the label to the layered pane at a high layer
+                        layeredPane.add(picLabel, JLayeredPane.POPUP_LAYER);
+                        layeredPane.setComponentZOrder(picLabel, 0);
+                        layeredPane.repaint();
+                        System.out.println("Default profile picture added to layered pane");
+                    }
+                } else {
+                    System.out.println("User has no profile picture, using default");
+
+                    // Create a default profile picture
+                    JLabel picLabel = new JLabel("👤");
+                    picLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                    picLabel.setForeground(THEME_PRIMARY);
                     picLabel.setHorizontalAlignment(JLabel.CENTER);
-                    picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 2));
+                    picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 1));
+                    picLabel.setSize(20, 20);
+                    picLabel.setLocation(x, y);
+                    picLabel.setOpaque(true);
+                    picLabel.setBackground(Color.WHITE);
 
-                    // Resize the image to fit the dialog
-                    Image img = profilePic.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-                    picLabel.setIcon(new ImageIcon(img));
-
-                    // Add the label to the dialog
-                    picDialog.add(picLabel);
-
-                    // Add a mouse listener to close the dialog when clicked
+                    // Add a mouse listener to show a larger profile picture when clicked
                     picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
                         @Override
-                        public void mouseClicked(java.awt.event.MouseEvent e) {
-                            picDialog.dispose();
+                        public void mouseClicked(java.awt.event.MouseEvent evt) {
+                            JOptionPane.showMessageDialog(ChatWindow.this, 
+                                "No profile picture available for " + nickname, 
+                                "No Picture", JOptionPane.INFORMATION_MESSAGE);
                         }
                     });
 
-                    // Show the dialog
-                    picDialog.setVisible(true);
+                    // Get the layered pane
+                    JLayeredPane layeredPane = getLayeredPane();
+                    System.out.println("Layered pane obtained: " + layeredPane);
 
-                    // Auto-close after 5 seconds
-                    new Timer(5000, e -> picDialog.dispose()).start();
-
-                    return;
-                } catch (Exception e) {
-                    System.err.println("Error showing floating profile picture: " + e.getMessage());
+                    // Add the label to the layered pane at a high layer
+                    layeredPane.add(picLabel, JLayeredPane.POPUP_LAYER);
+                    layeredPane.setComponentZOrder(picLabel, 0);
+                    layeredPane.repaint();
+                    System.out.println("Default profile picture added to layered pane");
                 }
+            } else {
+                System.out.println("User not found: " + nickname);
             }
         } catch (Exception e) {
-            System.err.println("Error showing floating profile picture: " + e.getMessage());
+            System.err.println("Error getting user profile: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -575,19 +786,12 @@ public class ChatWindow extends JFrame {
             // Format based on who sent the message
             if (sender.equals(user.getNickname())) {
                 // Message from current user - right-aligned
-                // Check if user has a profile picture
-                boolean hasProfilePic = (getUserProfileIcon(user.getNickname(), 20) != null);
-
-                // Add user profile info and timestamp
-                ImageIcon profileIcon = getUserProfileIcon(user.getNickname(), 20);
-                // Use emoji to represent profile picture right next to nickname
-                String profilePicIndicator = profileIcon != null ? "👤 " : "";
-                String profileInfo = profilePicIndicator + "You - " + timestamp;
+                // Add user profile info and timestamp with emoji
+                String profileInfo = "👤 You - " + timestamp;
                 messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
 
                 // Split long messages into multiple lines
                 String[] lines = splitMessage(content, 30);
-
 
                 for (String line : lines) {
                     // Right-align the message with a green indicator
@@ -595,16 +799,9 @@ public class ChatWindow extends JFrame {
                 }
             } else {
                 // Message from other user - left-aligned
-                // Check if sender has a profile picture
-                boolean hasProfilePic = (getUserProfileIcon(sender, 20) != null);
-
                 // Add sender's profile picture indicator, nickname and timestamp at the top
-                ImageIcon profileIcon = getUserProfileIcon(sender, 20);
-                // Use emoji to represent profile picture right next to nickname
-                String profilePicIndicator = profileIcon != null ? "👤 " : "";
-                String profileInfo = profilePicIndicator + sender + " - " + timestamp;
+                String profileInfo = "👤 " + sender + " - " + timestamp;
                 messageArea.append("\n" + profileInfo + "\n");
-
 
                 // Split long messages into multiple lines
                 String[] lines = splitMessage(content, 30);
@@ -622,16 +819,9 @@ public class ChatWindow extends JFrame {
             LocalDateTime now = LocalDateTime.now();
             String timestamp = now.getHour() + ":" + String.format("%02d", now.getMinute());
 
-            // Check if user has a profile picture
-            boolean hasProfilePic = (getUserProfileIcon(user.getNickname(), 20) != null);
-
-            // Add user profile info and timestamp
-            ImageIcon profileIcon = getUserProfileIcon(user.getNickname(), 20);
-            // Use emoji to represent profile picture right next to nickname
-            String profilePicIndicator = profileIcon != null ? "👤 " : "";
-            String profileInfo = profilePicIndicator + "You - " + timestamp;
+            // Add user profile info and timestamp with emoji
+            String profileInfo = "👤 You - " + timestamp;
             messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
-
 
             // Split long messages into multiple lines
             String[] lines = splitMessage(content, 30);
