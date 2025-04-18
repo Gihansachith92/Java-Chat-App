@@ -14,8 +14,13 @@ import java.awt.event.WindowEvent;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.text.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 public class ChatWindow extends JFrame {
 
@@ -65,6 +70,40 @@ public class ChatWindow extends JFrame {
         messageArea.setWrapStyleWord(true);
         messageArea.setBackground(THEME_BACKGROUND);
         messageArea.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        // Add mouse listener to detect clicks on profile picture indicators
+        messageArea.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                try {
+                    // Get the position of the click
+                    int pos = messageArea.viewToModel(e.getPoint());
+
+                    // Get the line of the click
+                    int line = messageArea.getLineOfOffset(pos);
+                    int start = messageArea.getLineStartOffset(line);
+                    int end = messageArea.getLineEndOffset(line);
+                    String text = messageArea.getText(start, end - start);
+
+                    // Check if the line contains a profile picture indicator
+                    if (text.contains("[PIC]")) {
+                        // Extract the nickname from the line
+                        String nickname;
+                        if (text.contains("You")) {
+                            nickname = user.getNickname();
+                        } else {
+                            // Extract nickname from format "[PIC] nickname - timestamp"
+                            nickname = text.substring(text.indexOf("[PIC]") + 6, text.lastIndexOf(" - ")).trim();
+                        }
+
+                        // Show the profile picture
+                        showProfilePicture(nickname);
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Error handling mouse click: " + ex.getMessage());
+                }
+            }
+        });
 
         messageField = new JTextField(30);
         messageField.setBackground(Color.WHITE);
@@ -326,8 +365,8 @@ public class ChatWindow extends JFrame {
         add(panel);
 
         // Display a welcome message when the user joins
-        displayMessage("Chat started at: " + LocalDateTime.now());
-        displayMessage(user.getNickname() + " has joined: " + LocalDateTime.now());
+        displayMessage("Chat started at: " + formatDateTime(LocalDateTime.now()));
+        displayMessage(user.getNickname() + " has joined: " + formatDateTime(LocalDateTime.now()));
 
         // Display connection status message
         if (chatService != null) {
@@ -413,6 +452,95 @@ public class ChatWindow extends JFrame {
         return null;
     }
 
+    // Method to display a user's profile picture in a popup window
+    private void showProfilePicture(String nickname) {
+        try {
+            User messageUser = userService.getUserByNickname(nickname);
+            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                try {
+                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
+
+                    // Create a new frame to display the profile picture
+                    JFrame picFrame = new JFrame(nickname + "'s Profile Picture");
+                    picFrame.setSize(300, 300);
+                    picFrame.setLocationRelativeTo(this);
+
+                    // Create a label to display the profile picture
+                    JLabel picLabel = new JLabel();
+                    picLabel.setHorizontalAlignment(JLabel.CENTER);
+
+                    // Resize the image to fit the frame
+                    Image img = profilePic.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
+                    picLabel.setIcon(new ImageIcon(img));
+
+                    // Add the label to the frame
+                    picFrame.add(picLabel);
+
+                    // Show the frame
+                    picFrame.setVisible(true);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Error loading profile picture: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No profile picture available for " + nickname, "No Picture", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error showing profile picture: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Method to display a user's profile picture in a floating window that stays open
+    private void showFloatingProfilePicture(String nickname, int x, int y) {
+        try {
+            User messageUser = userService.getUserByNickname(nickname);
+            if (messageUser != null && messageUser.getProfilePicture() != null && !messageUser.getProfilePicture().isEmpty()) {
+                try {
+                    ImageIcon profilePic = new ImageIcon(messageUser.getProfilePicture());
+
+                    // Create a new undecorated frame to display the profile picture
+                    JDialog picDialog = new JDialog(this, false);
+                    picDialog.setUndecorated(true);
+                    picDialog.setSize(100, 100);
+
+                    // Position the dialog near the message
+                    picDialog.setLocation(x, y);
+
+                    // Create a label to display the profile picture
+                    JLabel picLabel = new JLabel();
+                    picLabel.setHorizontalAlignment(JLabel.CENTER);
+                    picLabel.setBorder(BorderFactory.createLineBorder(THEME_PRIMARY, 2));
+
+                    // Resize the image to fit the dialog
+                    Image img = profilePic.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                    picLabel.setIcon(new ImageIcon(img));
+
+                    // Add the label to the dialog
+                    picDialog.add(picLabel);
+
+                    // Add a mouse listener to close the dialog when clicked
+                    picLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                        @Override
+                        public void mouseClicked(java.awt.event.MouseEvent e) {
+                            picDialog.dispose();
+                        }
+                    });
+
+                    // Show the dialog
+                    picDialog.setVisible(true);
+
+                    // Auto-close after 5 seconds
+                    new Timer(5000, e -> picDialog.dispose()).start();
+
+                    return;
+                } catch (Exception e) {
+                    System.err.println("Error showing floating profile picture: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error showing floating profile picture: " + e.getMessage());
+        }
+    }
+
     // Method to display a message in the chat window with professional formatting
     public void displayMessage(String message) {
         // Format system messages differently
@@ -447,28 +575,41 @@ public class ChatWindow extends JFrame {
             // Format based on who sent the message
             if (sender.equals(user.getNickname())) {
                 // Message from current user - right-aligned
-                // Add user profile info and timestamp with profile picture emoji
-                String profileInfo = "👤 You - " + timestamp;
+                // Check if user has a profile picture
+                boolean hasProfilePic = (getUserProfileIcon(user.getNickname(), 20) != null);
+
+                // Add user profile info and timestamp
+                ImageIcon profileIcon = getUserProfileIcon(user.getNickname(), 20);
+                // Use emoji to represent profile picture right next to nickname
+                String profilePicIndicator = profileIcon != null ? "👤 " : "";
+                String profileInfo = profilePicIndicator + "You - " + timestamp;
                 messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
 
                 // Split long messages into multiple lines
                 String[] lines = splitMessage(content, 30);
+
+
                 for (String line : lines) {
+                    // Right-align the message with a green indicator
                     messageArea.append(getSpaces(50 - line.length()) + line + "\n");
                 }
             } else {
                 // Message from other user - left-aligned
-                // Try to get the sender's profile information
-                User senderUser = userService.getUserByNickname(sender);
-                String profileEmoji = "👤"; // Default profile emoji
+                // Check if sender has a profile picture
+                boolean hasProfilePic = (getUserProfileIcon(sender, 20) != null);
 
                 // Add sender's profile picture indicator, nickname and timestamp at the top
-                String profileInfo = profileEmoji + " " + sender + " - " + timestamp;
+                ImageIcon profileIcon = getUserProfileIcon(sender, 20);
+                // Use emoji to represent profile picture right next to nickname
+                String profilePicIndicator = profileIcon != null ? "👤 " : "";
+                String profileInfo = profilePicIndicator + sender + " - " + timestamp;
                 messageArea.append("\n" + profileInfo + "\n");
+
 
                 // Split long messages into multiple lines
                 String[] lines = splitMessage(content, 30);
                 for (String line : lines) {
+                    // Left-align the message
                     messageArea.append(line + "\n");
                 }
             }
@@ -481,13 +622,21 @@ public class ChatWindow extends JFrame {
             LocalDateTime now = LocalDateTime.now();
             String timestamp = now.getHour() + ":" + String.format("%02d", now.getMinute());
 
-            // Add user profile info and timestamp with profile picture emoji
-            String profileInfo = "👤 You - " + timestamp;
+            // Check if user has a profile picture
+            boolean hasProfilePic = (getUserProfileIcon(user.getNickname(), 20) != null);
+
+            // Add user profile info and timestamp
+            ImageIcon profileIcon = getUserProfileIcon(user.getNickname(), 20);
+            // Use emoji to represent profile picture right next to nickname
+            String profilePicIndicator = profileIcon != null ? "👤 " : "";
+            String profileInfo = profilePicIndicator + "You - " + timestamp;
             messageArea.append("\n" + getSpaces(50) + profileInfo + "\n");
+
 
             // Split long messages into multiple lines
             String[] lines = splitMessage(content, 30);
             for (String line : lines) {
+                // Right-align the message
                 messageArea.append(getSpaces(50 - line.length()) + line + "\n");
             }
         }
@@ -537,6 +686,12 @@ public class ChatWindow extends JFrame {
         }
 
         return result;
+    }
+
+    // Helper method to format LocalDateTime to a user-friendly format
+    private String formatDateTime(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+        return dateTime.format(formatter);
     }
 
     // Method to send a message
@@ -631,14 +786,14 @@ public class ChatWindow extends JFrame {
 
             // Display a message indicating that the user has left
             LocalDateTime leaveTime = LocalDateTime.now();
-            String leaveMessage = user.getNickname() + " left: " + leaveTime;
+            String leaveMessage = user.getNickname() + " left: " + formatDateTime(leaveTime);
             displayMessage(leaveMessage);
 
             // Check if this is the last user in the chat
             if (connectedUsers.size() <= 1) {
                 // This is the last user, so end the chat
                 LocalDateTime endTime = LocalDateTime.now();
-                String endMessage = "Chat stopped at: " + endTime;
+                String endMessage = "Chat stopped at: " + formatDateTime(endTime);
                 displayMessage(endMessage);
 
                 // Save the chat to a .txt file
