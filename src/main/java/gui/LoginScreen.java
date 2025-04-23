@@ -188,25 +188,8 @@ public class LoginScreen extends JFrame {
         });
     }
 
-    // Static variable to track if a login screen is already open
-    private static boolean isLoginScreenOpen = false;
-
     public static void main(String[] args) {
-        // Only create a new login screen if one isn't already open
-        if (!isLoginScreenOpen) {
-            isLoginScreenOpen = true;
-            SwingUtilities.invokeLater(() -> {
-                LoginScreen loginScreen = new LoginScreen();
-                loginScreen.setVisible(true);
-                // Add a window listener to update the isLoginScreenOpen flag when the window is closed
-                loginScreen.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosed(java.awt.event.WindowEvent windowEvent) {
-                        isLoginScreenOpen = false;
-                    }
-                });
-            });
-        }
+        SwingUtilities.invokeLater(() -> new LoginScreen().setVisible(true));
     }
 
     // Helper method to style buttons with professional theme

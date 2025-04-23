@@ -231,7 +231,6 @@ public class RegistrationScreen extends JFrame {
                 JOptionPane.showMessageDialog(RegistrationScreen.this, "Registration successful!");
                 dispose(); // Close registration screen
                 // Don't create a new login screen, the original one is still open
-                // The user will be returned to the existing login screen
             }
         });
 

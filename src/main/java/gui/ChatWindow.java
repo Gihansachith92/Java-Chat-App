@@ -427,8 +427,7 @@ public class ChatWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose(); // Close chat window
-                // Use the main method to create a login screen to ensure only one is open
-                LoginScreen.main(null);
+                new LoginScreen().setVisible(true); // Open login screen
             }
         });
     }
