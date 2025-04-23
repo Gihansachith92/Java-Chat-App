@@ -289,7 +289,8 @@ public class AdminPanel extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose(); // Close admin panel
-                new LoginScreen().setVisible(true); // Open login screen
+                // Use the main method to create a login screen to ensure only one is open
+                LoginScreen.main(null);
             }
         });
     }
